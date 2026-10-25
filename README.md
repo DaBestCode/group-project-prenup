@@ -16,6 +16,14 @@ python3 server.py
 
 Open http://127.0.0.1:8787 and click **Negotiate the prenup**.
 
+## Free hosting
+
+The included `render.yaml` deploys the complete frontend and Python API on Render's free web-service plan. Use the Blueprint button below, choose the free plan shown in the preview, and create the service:
+
+[Deploy to Render](https://render.com/deploy?repo=https://github.com/DaBestCode/group-project-prenup)
+
+Render runs `python3 server.py --host 0.0.0.0 --port $PORT` and checks `/api/health`. No database, paid instance, or Supermemory key is required. Free instances can sleep or restart, so active negotiation sessions may reset; start a new negotiation if that happens.
+
 The sample deliberately creates a conflict: all three agents request the research role, while slides are unpopular. The solver searches every possible assignment, balancing:
 
 - role preference
