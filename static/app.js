@@ -57,6 +57,10 @@ function renderAgents() {
 }
 
 async function request(path, payload) {
+  if (window.location.hostname.endsWith("github.io")) {
+    if (path === "/api/negotiate") return PrenupEngine.createSession(payload.students);
+    if (path === "/api/confirm") return PrenupEngine.confirmSession(session, payload.student_id, payload.approved);
+  }
   const response = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

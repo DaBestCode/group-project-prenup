@@ -18,11 +18,11 @@ Open http://127.0.0.1:8787 and click **Negotiate the prenup**.
 
 ## Free hosting
 
-The included `render.yaml` deploys the complete frontend and Python API on Render's free web-service plan. Use the Blueprint button below, choose the free plan shown in the preview, and create the service:
+The public demo deploys to GitHub Pages on every push to `main`:
 
-[Deploy to Render](https://render.com/deploy?repo=https://github.com/DaBestCode/group-project-prenup)
+[Open the live demo](https://dabestcode.github.io/group-project-prenup/)
 
-Render runs `python3 server.py --host 0.0.0.0 --port $PORT` and checks `/api/health`. No database, paid instance, or Supermemory key is required. Free instances can sleep or restart, so active negotiation sessions may reset; start a new negotiation if that happens.
+The hosted build runs the same deterministic negotiation and consent flow entirely in the browser, so it needs no server, account, API key, or paid infrastructure. Local development still uses the Python API, which provides the same behavior and remains the reference implementation for a future authenticated agent coordinator.
 
 The sample deliberately creates a conflict: all three agents request the research role, while slides are unpopular. The solver searches every possible assignment, balancing:
 
@@ -88,6 +88,7 @@ The adapter uses Supermemory v5 namespaces: one hashed namespace per student, `P
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m py_compile server.py negotiator.py skills/group-project-prenup/scripts/preferences.py
+node tests/test_static.js
 ```
 
 ## Prototype limits
