@@ -45,7 +45,30 @@ After approval, exchange only:
 - possible meeting slots
 - a role that became unavailable after a private rejection
 
-The coordinator uses the Group Project Prenup `/api/negotiate` endpoint to create a proposal. Explain any compromise, then ask the student to approve or reject their own assignment. A rejection reveals only that the assigned role is unavailable and triggers another round. The treaty is final only after everyone approves.
+After approval, join the shared room with the coordinator client. It uses the hosted coordinator by default; `PRENUP_API_URL` or `--base-url` can select another deployment:
+
+```bash
+python3 scripts/coordinator.py join --room "<invite code>" --profile "/tmp/prenup-shareable.json"
+```
+
+The client saves the participant token locally with owner-only permissions. Never paste that token into chat or send it to another agent. Check the proposal with:
+
+```bash
+python3 scripts/coordinator.py status --room "<invite code>"
+```
+
+Explain any compromise, then ask the student to approve or reject their own assignment. Only after their answer, run one of:
+
+```bash
+python3 scripts/coordinator.py confirm --room "<invite code>" --approve
+python3 scripts/coordinator.py confirm --room "<invite code>" --reject
+```
+
+A rejection reveals only that the assigned role is unavailable and triggers another round. The treaty is final only after everyone approves. To create a room for the group:
+
+```bash
+python3 scripts/coordinator.py create --title "<project name>" --members 3
+```
 
 ## Remember for next time
 
@@ -63,6 +86,7 @@ This command makes no network request and changes no saved state:
 
 ```bash
 python3 scripts/preferences.py sample
+python3 scripts/coordinator.py sample
 ```
 
 ## Replies

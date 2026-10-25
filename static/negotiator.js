@@ -1,5 +1,4 @@
-(function attachPrenupEngine(root) {
-  const roles = [
+const roles = [
     { id: "research", label: "Research lead", skill: "research", effort: 2 },
     { id: "analysis", label: "Analysis + build", skill: "analysis", effort: 3 },
     { id: "slides", label: "Slide architect", skill: "design", effort: 2 },
@@ -142,5 +141,4 @@
     return next;
   }
 
-  root.PrenupEngine = { createSession, confirmSession, negotiate };
-}(typeof window === "undefined" ? globalThis : window));
+export { confirmSession, createSession, negotiate };

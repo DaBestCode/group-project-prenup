@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "group-project-prenup",
+  "main": "./worker/index.js",
+  "compatibility_date": "2026-10-24",
+  "assets": {
+    "directory": "./static",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "group-project-prenup",
+      "database_id": "bdeb5ea3-d757-4b11-a42a-f1ba7a329ee9"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

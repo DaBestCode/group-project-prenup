@@ -2,99 +2,115 @@
 
 > Sign the treaty before the group chat becomes a crime scene.
 
-Group Project Prenup is a working Track 2 prototype for the Cubbie Hackathon. Personal agents privately compare each student's availability, strengths, role preferences, and workload capacity. They exchange only the constraints needed to negotiate a fair task split and meeting time. The proposed treaty becomes final only after every student confirms it.
+Group Project Prenup is a working Cubbie Hackathon Track 2 app. Each student joins the same invite room through the web app or their Cubbie agent. The coordinator compares only approved, shareable preferences and proposes a fair task split and meeting time. A private rejection starts a new negotiation round; the treaty becomes final only after every student approves.
 
-## Why students need it
+## Try it
 
-Group projects usually fail before the work begins: everyone assumes someone else owns the slides, schedules stay vague, and personal constraints get explained repeatedly in a group chat. The Prenup gives the group one explicit, unanimously accepted plan without requiring students to publish their calendars or private reasons.
+- [Interactive demo](https://dabestcode.github.io/group-project-prenup/) — instant, account-free sample in the browser
+- [Live shared rooms](https://group-project-prenup.pjanga.workers.dev/room) — persistent invite rooms for separate student agents
 
-## Demo
+The demo starts with a real conflict: all three agents want research and nobody wants slides. Reject an assignment to see the agents bargain again under the new private constraint.
 
-```bash
-python3 server.py
-```
+## The student flow
 
-Open http://127.0.0.1:8787 and click **Negotiate the prenup**.
+1. One teammate creates a named room for 2–6 people and shares the six-character invite code.
+2. Each student submits strengths, preferences, avoided work, capacity, and possible meeting windows.
+3. When the room fills, the agents negotiate a role split and shared time.
+4. Each student approves or privately rejects. Rejection shares only the newly unavailable role.
+5. Unanimous approval signs the treaty and persists it for the group.
 
-## Free hosting
-
-The public demo deploys to GitHub Pages on every push to `main`:
-
-[Open the live demo](https://dabestcode.github.io/group-project-prenup/)
-
-The hosted build runs the same deterministic negotiation and consent flow entirely in the browser, so it needs no server, account, API key, or paid infrastructure. Local development still uses the Python API, which provides the same behavior and remains the reference implementation for a future authenticated agent coordinator.
-
-The sample deliberately creates a conflict: all three agents request the research role, while slides are unpopular. The solver searches every possible assignment, balancing:
-
-- role preference
-- skill match
-- workload capacity
-- effort fairness
-- avoided roles
-- shared meeting availability
-
-Approve the treaty as each student, or reject one assignment privately to make that role a hard constraint and trigger a materially different negotiation round.
-
-## What agents share
-
-- role and skill signals
-- workload capacity
-- possible meeting slots
-- a newly unavailable role after a rejection
-
-## What stays private
-
-- course names and complete calendars
-- jobs, family commitments, and personal explanations
-- the reason a student rejected a proposal
-
-The browser receives only the public proposal. Tests verify that private notes and calendar details do not appear in serialized proposal data.
+The public room response contains names, approval state, and the proposal. It does not contain raw profiles, participant tokens, calendar details, or private explanations. Tokens are hashed before storage.
 
 ## Architecture
 
-- `negotiator.py` models personal agents and exhaustively searches the small assignment space.
-- `server.py` stores negotiation rounds, confirmations, and rejections in memory and exposes a small JSON API.
-- `static/` contains a dependency-free responsive demo interface.
-- `skills/group-project-prenup/` is the installable Cubbie Skill and its tested Supermemory v5 adapter.
+- `worker/index.js` provides the room API and serves the web app on Cloudflare Workers.
+- Cloudflare D1 persists rooms, redacted profiles, negotiation rounds, and approvals.
+- `static/negotiator.js` is the deterministic, explainable solver shared by the browser demo and Worker.
+- `static/room.html` is the live invite-room UI; `static/index.html` remains the quick judge demo.
+- `skills/group-project-prenup/` is an installable Cubbie Skill with coordinator and Supermemory clients.
+- `server.py` is the original local Python demo API and a reference implementation used by its tests.
 
-The current prototype uses deterministic agent policies so every demo is explainable and repeatable. Each sponsor has one concrete job:
+Sponsor tools each have a concrete role:
 
-- **Cubbie** is the private interface for one student. It gathers calendar free/busy windows, preferences, and workload, shows the redacted profile, and asks before sharing or confirming.
-- **Supermemory** optionally keeps durable strengths and role preferences between projects. The adapter deliberately excludes meeting availability, calendar events, course details, and private reasons.
+- **Cubbie** privately gathers one student's preferences, shows the redacted payload, and asks before sharing or confirming.
+- **Supermemory** can remember durable strengths and role preferences. Availability, courses, teammates, and private reasons are never stored.
+- **Cloudflare Workers + D1** provide a free shared coordinator and persistent rooms without AWS costs.
 
-The coordinator stays a tiny self-hostable Python service with no cloud dependency or required paid infrastructure.
+## Run the full app locally
 
-## Install the Cubbie Skill
-
-Send Cubbie the GitHub link to the `skills/group-project-prenup` folder. The Skill walks one student through the privacy and consent flow and includes a no-network sample:
+Requires Node.js 20 or newer.
 
 ```bash
-python3 skills/group-project-prenup/scripts/preferences.py sample
+npm install
+npm run db:migrate:local
+npm run dev
 ```
+
+Open the local URL printed by Wrangler, choose **Create a shared room**, and open the invite in separate browser profiles for each teammate.
+
+## Deploy on Cloudflare's free tier
+
+Authenticate once, create the D1 database, put its returned `database_id` in `wrangler.jsonc`, and deploy:
+
+```bash
+npx wrangler login
+npx wrangler d1 create group-project-prenup
+npm run db:migrate:remote
+npm run deploy
+```
+
+Static assets and API share one origin, so no paid host or API proxy is required. Usage beyond Cloudflare's free allocation is subject to Cloudflare's current limits.
+
+## Cubbie Skill
+
+Give Cubbie the GitHub link to `skills/group-project-prenup`. Its coordinator client supports the complete room lifecycle:
+
+```bash
+python3 skills/group-project-prenup/scripts/coordinator.py sample
+python3 skills/group-project-prenup/scripts/coordinator.py create --title "CSE 412 Final" --members 3
+python3 skills/group-project-prenup/scripts/coordinator.py join --room "ABC234" --profile "/tmp/shareable-profile.json"
+python3 skills/group-project-prenup/scripts/coordinator.py status --room "ABC234"
+python3 skills/group-project-prenup/scripts/coordinator.py confirm --room "ABC234" --approve
+```
+
+The join command saves the participant token under `~/.config/group-project-prenup/rooms.json` with owner-only permissions. The Skill requires the student's approval before joining or confirming.
 
 ## Optional Supermemory
 
-The demo does not need an API key. To enable preferences that survive between projects, set `SUPERMEMORY_API_KEY` in the environment where the Skill runs, then use:
+The app works without an API key. To recall durable preferences, set `SUPERMEMORY_API_KEY` where the Skill runs:
 
 ```bash
 python3 skills/group-project-prenup/scripts/preferences.py recall --student-id "student-123"
 python3 skills/group-project-prenup/scripts/preferences.py remember --input /tmp/prenup-profile.json
 ```
 
-The adapter uses Supermemory v5 namespaces: one hashed namespace per student, `POST /ns/{namespace}/document` to remember preferences, and `POST /ns/{namespace}/search` to recall them. Keys stay in the environment and are never collected in chat or committed.
+The adapter uses Supermemory v5 namespaces and excludes current availability, calendar events, course details, teammate names, and private reasons.
 
-## Test
+## API
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/rooms` | Create a room with `title` and `expected_members` |
+| `POST` | `/api/rooms/:code/join` | Join with an approved shareable profile |
+| `GET` | `/api/rooms/:code` | Read the redacted public room state |
+| `POST` | `/api/rooms/:code/confirm` | Approve or reject using the participant bearer token |
+| `GET` | `/api/health` | Check the coordinator and D1 binding |
+
+## Verification
 
 ```bash
-python3 -m unittest discover -s tests -v
-python3 -m py_compile server.py negotiator.py skills/group-project-prenup/scripts/preferences.py
-node tests/test_static.js
+npm test
+npx wrangler deploy --dry-run
+python3 -m py_compile server.py negotiator.py \
+  skills/group-project-prenup/scripts/preferences.py \
+  skills/group-project-prenup/scripts/coordinator.py
 ```
 
-## Prototype limits
+The tests cover negotiation fairness, private-data redaction, consent state, persistence helpers, the browser engine, and the Worker profile boundary. The full Worker flow has also been exercised against local D1 from creation through a rejected round and unanimous signing.
 
-- Sessions are stored in memory and reset when the server restarts.
-- The demo uses three sample students and four fixed project roles.
-- It does not connect to real calendars or messaging accounts.
-- Supermemory is optional and requires the student's own API key; automated tests use a fake transport and make no billable calls.
-- Authentication, encrypted agent transport, and production messaging adapters remain future work.
+## Current limits
+
+- The solver uses four general project roles; a future version can accept project-specific deliverables.
+- Rooms are code-accessible and intended for hackathon demonstrations, not sensitive projects.
+- Messaging and calendar integrations are guided by the Cubbie Skill but require the student's connected services.
+- Supermemory is optional and uses the student's own key.

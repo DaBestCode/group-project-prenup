@@ -162,10 +162,48 @@ blockquote { margin: 20px 0; font-size: 28px; line-height: 1.25; font-weight: 80
 .data-boundary { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 24px; padding: 17px 20px; border: 1px dashed var(--ink); font: 500 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .04em; }
 footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px 7vw; color: white; background: var(--ink); font: 400 10px "DM Mono", monospace; }
 
+.room-page { min-height: 100vh; background: #f7f3ea; }
+.room-shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 70px 0 110px; }
+.room-intro { max-width: 820px; margin-bottom: 46px; }
+.room-intro h1 { font-size: clamp(52px, 7vw, 94px); }
+.room-intro > p:last-child { max-width: 650px; color: #5e625a; font-size: 18px; line-height: 1.6; }
+.room-start, .lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.room-card { padding: 30px; border: 1px solid var(--ink); background: #fffdf8; box-shadow: var(--shadow); }
+.accent-card { background: var(--acid); }
+.room-card h2 { margin: 8px 0 26px; font-size: 34px; letter-spacing: -.04em; }
+.room-card h3 { margin: 8px 0 20px; font-size: 24px; }
+.room-card form, .profile-form { display: grid; gap: 18px; }
+.room-card label { display: grid; gap: 8px; font: 500 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .05em; }
+.room-card label small { color: #73776f; font: 400 10px Manrope, sans-serif; text-transform: none; letter-spacing: 0; }
+.room-card input, .room-card select, .room-card textarea { width: 100%; padding: 14px; border: 1px solid var(--ink); border-radius: 0; background: rgba(255,255,255,.8); color: var(--ink); font: 500 14px Manrope, sans-serif; }
+.room-card textarea { resize: vertical; }
+.room-alert { margin-bottom: 20px; padding: 14px 18px; color: #8c2900; border: 1px solid var(--orange); background: #fff0e8; }
+.join-card { max-width: 780px; margin: 0 auto; }
+.room-card-heading, .shared-room-header { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.room-code { padding: 10px 13px; border: 1px solid var(--ink); background: var(--pink); font: 500 18px "DM Mono", monospace; letter-spacing: .12em; }
+.form-note { padding: 12px 14px; background: #f1ede4; color: #61645e; font-size: 13px; }
+.profile-form { grid-template-columns: 1fr 1fr; }
+.profile-form label:nth-child(5), .profile-form .share-preview, .profile-form button { grid-column: 1 / -1; }
+.share-preview { display: flex; justify-content: space-between; gap: 20px; padding: 15px; border: 1px dashed var(--ink); font-size: 12px; }
+.shared-room-header { margin-bottom: 28px; }
+.shared-room-header h2 { margin: 0; font-size: clamp(38px, 5vw, 64px); letter-spacing: -.04em; }
+.privacy-room-card { display: flex; align-items: center; gap: 18px; background: #e8ddff; }
+.privacy-room-card > span { font-size: 34px; }
+.privacy-room-card p { color: #5e625a; line-height: 1.55; }
+.member-list { display: grid; gap: 8px; }
+.member-row { display: flex; justify-content: space-between; padding: 12px; border: 1px solid #bbb8ae; background: white; }
+.member-row b { color: var(--green); font: 500 10px "DM Mono", monospace; text-transform: uppercase; }
+.empty-member { color: #8b8d87; background: transparent; border-style: dashed; }
+#proposal-area { margin-top: 65px; }
+.shared-consent { margin-top: 22px; }
+.shared-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.signed-seal { padding: 18px; border: 2px solid var(--ink); background: rgba(255,255,255,.6); font: 600 13px "DM Mono", monospace; transform: rotate(-1deg); }
+
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; padding-top: 65px; }
   .hero-card { margin-top: 30px; }
   .agent-grid, .steps, .sponsor-grid { grid-template-columns: 1fr; }
+  .room-start, .lobby-grid { grid-template-columns: 1fr; }
   .section-heading, .demo-grid, .consent-panel { display: grid; grid-template-columns: 1fr; }
   .section-heading { align-items: start; }
   .steps article { min-height: 210px; }
@@ -185,4 +223,8 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .meeting-row small { grid-column: 1 / -1; }
   .data-boundary { align-items: stretch; flex-direction: column; }
   footer { flex-direction: column; }
+  .room-shell { width: min(100% - 28px, 1120px); padding-top: 45px; }
+  .profile-form { grid-template-columns: 1fr; }
+  .profile-form label, .profile-form label:nth-child(5), .profile-form .share-preview, .profile-form button { grid-column: 1; }
+  .room-card-heading, .shared-room-header, .share-preview, .shared-actions { align-items: stretch; flex-direction: column; }
 }
