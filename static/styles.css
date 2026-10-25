@@ -190,6 +190,12 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 .privacy-room-card { display: flex; align-items: center; gap: 18px; background: #e8ddff; }
 .privacy-room-card > span { font-size: 34px; }
 .privacy-room-card p { color: #5e625a; line-height: 1.55; }
+.personal-agent-card { display: grid; grid-template-columns: .7fr 1.3fr; gap: 30px; margin-top: 20px; background: #dcecff; }
+.personal-agent-card p { color: #59615d; line-height: 1.5; }
+.agent-inbox { display: grid; gap: 8px; }
+.agent-message { padding: 12px 14px; border: 1px solid rgba(29,32,28,.3); background: rgba(255,255,255,.75); }
+.agent-message b { display: block; margin-bottom: 4px; font: 500 10px "DM Mono", monospace; color: var(--blue); text-transform: uppercase; }
+.agent-message span { font-size: 13px; line-height: 1.45; }
 .member-list { display: grid; gap: 8px; }
 .member-row { display: flex; justify-content: space-between; padding: 12px; border: 1px solid #bbb8ae; background: white; }
 .member-row b { color: var(--green); font: 500 10px "DM Mono", monospace; text-transform: uppercase; }
@@ -204,6 +210,7 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .hero-card { margin-top: 30px; }
   .agent-grid, .steps, .sponsor-grid { grid-template-columns: 1fr; }
   .room-start, .lobby-grid { grid-template-columns: 1fr; }
+  .personal-agent-card { grid-template-columns: 1fr; }
   .section-heading, .demo-grid, .consent-panel { display: grid; grid-template-columns: 1fr; }
   .section-heading { align-items: start; }
   .steps article { min-height: 210px; }

@@ -94,6 +94,12 @@ async function participantsFor(roomId, env) {
   return result.results || [];
 }
 
+function agentMessage(env, roomId, participantId, sender, recipient, kind, message) {
+  return env.DB.prepare(
+    "INSERT INTO agent_messages (room_id, participant_id, sender, recipient, kind, message_json) VALUES (?, ?, ?, ?, ?, ?)",
+  ).bind(roomId, participantId, sender, recipient, kind, JSON.stringify(message));
+}
+
 async function roomView(roomId, env) {
   const room = await env.DB.prepare(
     "SELECT id, title, expected_members, status, round, proposal_json, created_at FROM rooms WHERE id = ?",
@@ -117,11 +123,24 @@ async function buildProposal(roomId, env, round) {
   const participants = await participantsFor(roomId, env);
   const result = negotiate(participants.map((participant) => JSON.parse(participant.profile_json)));
   delete result.students;
+  const proposalMessages = participants.map((participant) => {
+    const assignments = result.assignments
+      .filter((assignment) => assignment.owner_id === participant.id)
+      .map(({ role_id, role, effort, reason }) => ({ role_id, role, effort, reason }));
+    return agentMessage(env, roomId, participant.id, "coordinator", "personal_agent", "proposal_ready", {
+      round,
+      assignments,
+      meeting: result.meeting.slot,
+      fairness_score: result.fairness_score,
+      needs_owner_confirmation: true,
+    });
+  });
   await env.DB.batch([
     env.DB.prepare(
       "UPDATE rooms SET status = 'awaiting_confirmation', round = ?, proposal_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
     ).bind(round, JSON.stringify(result), roomId),
     env.DB.prepare("UPDATE participants SET approval = 'pending' WHERE room_id = ?").bind(roomId),
+    ...proposalMessages,
   ]);
 }
 
@@ -140,9 +159,19 @@ async function joinRoom(request, env, roomId) {
   }
   const token = `${roomId}.${randomString(36, `${CODE_ALPHABET.toLowerCase()}${CODE_ALPHABET}`)}`;
   const hash = await tokenHash(token);
-  await env.DB.prepare(
-    "INSERT INTO participants (room_id, id, token_hash, name, profile_json) VALUES (?, ?, ?, ?, ?)",
-  ).bind(roomId, participantId, hash, profile.name, JSON.stringify(profile)).run();
+  await env.DB.batch([
+    env.DB.prepare(
+      "INSERT INTO participants (room_id, id, token_hash, name, profile_json) VALUES (?, ?, ?, ?, ?)",
+    ).bind(roomId, participantId, hash, profile.name, JSON.stringify(profile)),
+    agentMessage(env, roomId, participantId, "personal_agent", "coordinator", "constraints_offer", {
+      strengths: profile.strengths,
+      prefers: profile.prefers,
+      avoids: profile.avoids,
+      available: profile.available,
+      capacity: profile.capacity,
+      private_fields_shared: false,
+    }),
+  ]);
 
   if (existing.length + 1 === room.expected_members) await buildProposal(roomId, env, 1);
   return json({ participant_id: participantId, participant_token: token, room: await roomView(roomId, env) }, 201);
@@ -160,6 +189,25 @@ async function authenticatedParticipant(request, roomId, env) {
   return participant;
 }
 
+async function agentInbox(request, roomId, env) {
+  const participant = await authenticatedParticipant(request, roomId, env);
+  const messages = await env.DB.prepare(
+    "SELECT id, sender, recipient, kind, message_json, created_at FROM agent_messages WHERE room_id = ? AND participant_id = ? ORDER BY id",
+  ).bind(roomId, participant.id).all();
+  return json({
+    agent: { participant_id: participant.id, name: participant.name },
+    messages: (messages.results || []).map((message) => ({
+      id: message.id,
+      sender: message.sender,
+      recipient: message.recipient,
+      kind: message.kind,
+      message: JSON.parse(message.message_json),
+      created_at: message.created_at,
+    })),
+    room: await roomView(roomId, env),
+  });
+}
+
 async function confirmRoom(request, env, roomId) {
   const room = await env.DB.prepare("SELECT status, round, proposal_json FROM rooms WHERE id = ?").bind(roomId).first();
   if (!room) throw new HttpError(404, "That room does not exist.");
@@ -169,12 +217,25 @@ async function confirmRoom(request, env, roomId) {
   const input = await body(request);
 
   if (input.approved === true) {
-    await env.DB.prepare("UPDATE participants SET approval = 'approved' WHERE room_id = ? AND id = ?").bind(roomId, participant.id).run();
+    await env.DB.batch([
+      env.DB.prepare("UPDATE participants SET approval = 'approved' WHERE room_id = ? AND id = ?").bind(roomId, participant.id),
+      agentMessage(env, roomId, participant.id, "personal_agent", "coordinator", "owner_approved", {
+        round: room.round,
+        consent: "explicit",
+      }),
+    ]);
     const pending = await env.DB.prepare(
       "SELECT COUNT(*) AS count FROM participants WHERE room_id = ? AND approval != 'approved'",
     ).bind(roomId).first();
     if (Number(pending.count) === 0) {
-      await env.DB.prepare("UPDATE rooms SET status = 'signed', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(roomId).run();
+      const participants = await participantsFor(roomId, env);
+      await env.DB.batch([
+        env.DB.prepare("UPDATE rooms SET status = 'signed', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(roomId),
+        ...participants.map((person) => agentMessage(env, roomId, person.id, "coordinator", "personal_agent", "treaty_signed", {
+          round: room.round,
+          unanimous: true,
+        })),
+      ]);
     }
     return json(await roomView(roomId, env));
   }
@@ -184,8 +245,15 @@ async function confirmRoom(request, env, roomId) {
   const assignedRoles = proposal.assignments.filter((item) => item.owner_id === participant.id).map((item) => item.role_id);
   const profile = JSON.parse(participant.profile_json);
   profile.declined_roles = [...new Set([...(profile.declined_roles || []), ...assignedRoles])].sort();
-  await env.DB.prepare("UPDATE participants SET profile_json = ? WHERE room_id = ? AND id = ?")
-    .bind(JSON.stringify(profile), roomId, participant.id).run();
+  await env.DB.batch([
+    env.DB.prepare("UPDATE participants SET profile_json = ? WHERE room_id = ? AND id = ?")
+      .bind(JSON.stringify(profile), roomId, participant.id),
+    agentMessage(env, roomId, participant.id, "personal_agent", "coordinator", "owner_rejected", {
+      round: room.round,
+      unavailable_roles: assignedRoles,
+      private_reason_shared: false,
+    }),
+  ]);
   await buildProposal(roomId, env, Number(room.round) + 1);
   const updated = await env.DB.prepare("SELECT proposal_json FROM rooms WHERE id = ?").bind(roomId).first();
   const revised = JSON.parse(updated.proposal_json);
@@ -204,10 +272,11 @@ async function api(request, env) {
   if (request.method === "GET" && path === "/api/health") return json({ ok: true, storage: "d1" });
   if (request.method === "POST" && path === "/api/rooms") return createRoom(request, env);
 
-  const match = path.match(/^\/api\/rooms\/([A-Z2-9]{6})(?:\/(join|confirm))?$/);
+  const match = path.match(/^\/api\/rooms\/([A-Z2-9]{6})(?:\/(join|confirm|inbox))?$/);
   if (!match) throw new HttpError(404, "API route not found.");
   const roomId = match[1];
   if (request.method === "GET" && !match[2]) return json(await roomView(roomId, env));
+  if (request.method === "GET" && match[2] === "inbox") return agentInbox(request, roomId, env);
   if (request.method === "POST" && match[2] === "join") return joinRoom(request, env, roomId);
   if (request.method === "POST" && match[2] === "confirm") return confirmRoom(request, env, roomId);
   throw new HttpError(405, "Method not allowed.");

@@ -31,6 +31,27 @@ class CoordinatorStateTests(unittest.TestCase):
             with self.assertRaisesRegex(coordinator.CoordinatorError, "Join it first"):
                 coordinator.token_for("ABC234", Path(directory) / "missing.json")
 
+    def test_owner_update_names_only_this_agents_work(self):
+        inbox = {
+            "agent": {"participant_id": "p1", "name": "Maya"},
+            "room": {
+                "status": "awaiting_confirmation",
+                "round": 2,
+                "participants": [{"id": "p1", "name": "Maya", "approval": "pending"}],
+                "proposal": {
+                    "assignments": [
+                        {"owner_id": "p1", "role": "Slide architect"},
+                        {"owner_id": "p2", "role": "Research lead"},
+                    ],
+                    "meeting": {"slot": "Thu 5:30"},
+                },
+            },
+        }
+        update = coordinator.owner_update(inbox)
+        self.assertEqual(update["event"], "owner_confirmation_needed")
+        self.assertIn("Slide architect", update["message"])
+        self.assertNotIn("Research lead", update["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

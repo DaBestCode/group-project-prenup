@@ -3,6 +3,7 @@ const params = new URLSearchParams(window.location.search);
 const roomCode = (params.get("room") || "").toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6);
 const apiBase = (params.get("api") || window.location.origin).replace(/\/$/, "");
 let room = null;
+let agentInbox = null;
 let pollTimer = null;
 
 function escapeHtml(value) {
@@ -43,6 +44,7 @@ function goToRoom(code) {
 async function loadRoom() {
   room = await request(`/api/rooms/${roomCode}`);
   const mine = membership();
+  agentInbox = mine ? await request(`/api/rooms/${roomCode}/inbox`, { headers: { Authorization: `Bearer ${mine.token}` } }) : null;
   $("#start-screen").classList.add("hidden");
   if (!mine && room.status === "lobby" && room.spots_left > 0) {
     $("#join-screen").classList.remove("hidden");
@@ -68,6 +70,7 @@ function renderRoom() {
   $("#member-list").innerHTML = room.participants.map((participant) => `
     <div class="member-row"><span>${escapeHtml(participant.name)}${mine?.participant_id === participant.id ? " (you)" : ""}</span><b>${participant.approval === "approved" ? "✓ approved" : room.proposal ? "reviewing" : "joined"}</b></div>
   `).join("") + Array.from({ length: room.spots_left }, () => '<div class="member-row empty-member"><span>Invite pending</span><b>···</b></div>').join("");
+  renderAgentInbox(mine);
 
   if (!room.proposal) {
     $("#proposal-area").classList.add("hidden");
@@ -82,6 +85,30 @@ function renderRoom() {
   $("#shared-log").innerHTML = room.proposal.log.map((entry) => `<div class="message"><strong>${escapeHtml(entry.speaker)}</strong><span>${escapeHtml(entry.message)}</span></div>`).join("");
   $("#shared-assignments").innerHTML = room.proposal.assignments.map((assignment) => `<div class="assignment"><div><h4>${escapeHtml(assignment.role)}</h4><p>${assignment.effort} effort ${assignment.effort === 1 ? "point" : "points"} · ${escapeHtml(assignment.reason)}</p></div><span class="owner">${escapeHtml(assignment.owner)}</span></div>`).join("");
   renderActions(mine);
+}
+
+function agentMessageText(entry) {
+  if (entry.kind === "constraints_offer") return "Sent the approved constraint envelope to the coordinator.";
+  if (entry.kind === "proposal_ready") {
+    const roles = entry.message.assignments.map((assignment) => assignment.role).join(" + ");
+    return `Received round ${entry.message.round}: ${roles || "no role yet"}. Human confirmation required.`;
+  }
+  if (entry.kind === "owner_approved") return `Told the coordinator you approved round ${entry.message.round}.`;
+  if (entry.kind === "owner_rejected") return `Asked for a new round. Your private reason stayed private.`;
+  if (entry.kind === "treaty_signed") return "Received the unanimous signed treaty.";
+  return "Agent protocol message received.";
+}
+
+function renderAgentInbox(mine) {
+  const card = $("#personal-agent-card");
+  if (!mine || !agentInbox) {
+    card.classList.add("hidden");
+    return;
+  }
+  card.classList.remove("hidden");
+  $("#agent-inbox").innerHTML = agentInbox.messages.slice(-5).reverse().map((entry) => `
+    <div class="agent-message"><b>${escapeHtml(entry.sender)} → ${escapeHtml(entry.recipient)}</b><span>${escapeHtml(agentMessageText(entry))}</span></div>
+  `).join("");
 }
 
 function renderActions(mine) {
@@ -151,6 +178,7 @@ $("#join-form").addEventListener("submit", async (event) => {
     });
     localStorage.setItem(`prenup:${roomCode}`, JSON.stringify({ participant_id: result.participant_id, token: result.participant_token }));
     room = result.room;
+    agentInbox = await request(`/api/rooms/${roomCode}/inbox`, { headers: { Authorization: `Bearer ${result.participant_token}` } });
     $("#join-screen").classList.add("hidden");
     $("#room-screen").classList.remove("hidden");
     renderRoom();

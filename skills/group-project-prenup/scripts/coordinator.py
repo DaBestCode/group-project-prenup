@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -99,6 +100,14 @@ def parser() -> argparse.ArgumentParser:
     status = commands.add_parser("status", help="show the public room state")
     status.add_argument("--room", required=True)
 
+    inbox = commands.add_parser("inbox", help="show private agent-to-coordinator messages")
+    inbox.add_argument("--room", required=True)
+
+    watch = commands.add_parser("watch", help="wait until this personal agent needs its student")
+    watch.add_argument("--room", required=True)
+    watch.add_argument("--timeout", type=int, default=120)
+    watch.add_argument("--interval", type=float, default=3)
+
     confirm = commands.add_parser("confirm", help="approve or privately reject a proposal")
     confirm.add_argument("--room", required=True)
     decision = confirm.add_mutually_exclusive_group(required=True)
@@ -107,6 +116,26 @@ def parser() -> argparse.ArgumentParser:
 
     commands.add_parser("sample", help="print a no-network walkthrough")
     return root
+
+
+def owner_update(inbox: dict[str, Any]) -> dict[str, Any] | None:
+    room = inbox["room"]
+    participant_id = inbox["agent"]["participant_id"]
+    me = next((person for person in room["participants"] if person["id"] == participant_id), None)
+    if room["status"] == "signed":
+        return {"event": "treaty_signed", "message": "Everyone approved. The group-project prenup is signed.", "room": room}
+    if room["status"] == "awaiting_confirmation" and me and me["approval"] == "pending":
+        mine = [assignment for assignment in room["proposal"]["assignments"] if assignment["owner_id"] == participant_id]
+        roles = ", ".join(assignment["role"] for assignment in mine)
+        meeting = room["proposal"]["meeting"]["slot"] or "no common time yet"
+        return {
+            "event": "owner_confirmation_needed",
+            "message": f"Your agent negotiated: {roles}. Group sync: {meeting}. Approve or renegotiate privately?",
+            "round": room["round"],
+            "assignments": mine,
+            "meeting": meeting,
+        }
+    return None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -127,6 +156,19 @@ def main(argv: list[str] | None = None) -> int:
             save_membership(code, {"participant_id": result["participant_id"], "participant_token": result["participant_token"]}, args.state)
         elif args.command == "status":
             result = call_api(args.base_url, f"/api/rooms/{code}")
+        elif args.command == "inbox":
+            result = call_api(args.base_url, f"/api/rooms/{code}/inbox", token=token_for(code, args.state))
+        elif args.command == "watch":
+            deadline = time.monotonic() + max(1, args.timeout)
+            result = None
+            while time.monotonic() < deadline:
+                inbox = call_api(args.base_url, f"/api/rooms/{code}/inbox", token=token_for(code, args.state))
+                result = owner_update(inbox)
+                if result:
+                    break
+                time.sleep(max(0.5, args.interval))
+            if result is None:
+                result = {"event": "still_waiting", "message": "No decision is needed yet. The other agents have not all checked in."}
         else:
             result = call_api(args.base_url, f"/api/rooms/{code}/confirm", "POST", {"approved": args.approve}, token_for(code, args.state))
         print(json.dumps(result, indent=2))

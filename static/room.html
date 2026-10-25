@@ -20,7 +20,7 @@
       <section class="room-intro">
         <p class="eyebrow">THE ACTUAL PRENUP</p>
         <h1>Make the group plan before the group chat makes enemies.</h1>
-        <p>Start a room, send one link, and let each teammate share their own approved constraints.</p>
+        <p>Start a room, send one code, and let each teammate's Cubbie agent bargain here—then text its own student for approval.</p>
       </section>
 
       <div class="room-alert hidden" id="room-alert" role="alert"></div>
@@ -55,8 +55,8 @@
           <label>Roles to avoid<input name="avoids" placeholder="presentation" /></label>
           <label>Times you can meet <small>one per line</small><textarea name="available" rows="3" placeholder="Thu 5:30 PM&#10;Sun 6:00 PM"></textarea></label>
           <label>Workload capacity <output id="capacity-output">3</output><input name="capacity" type="range" min="1" max="6" value="3" /></label>
-          <div class="share-preview"><strong>Your agent will share:</strong><span>role signals · capacity · possible meeting times</span></div>
-          <button class="button button-primary" type="submit">Approve and join →</button>
+          <div class="share-preview"><strong>Your Cubbie agent will send:</strong><span>role signals · capacity · possible meeting times</span></div>
+          <button class="button button-primary" type="submit">Authorize my agent →</button>
         </form>
       </section>
 
@@ -69,6 +69,10 @@
           <article class="room-card"><span class="panel-kicker">TEAM</span><h3 id="lobby-message">Waiting for teammates</h3><div class="member-list" id="member-list"></div></article>
           <article class="room-card privacy-room-card"><span>🔒</span><div><h3>Private stays private</h3><p>The room stores only the profile each student approved. Rejection reasons never appear here.</p></div></article>
         </div>
+        <article class="room-card personal-agent-card hidden" id="personal-agent-card">
+          <div><span class="panel-kicker">YOUR CUBBIE AGENT</span><h3>Private agent inbox</h3><p>These authenticated messages belong only to your agent. Each teammate has a separate inbox and student.</p></div>
+          <div class="agent-inbox" id="agent-inbox"></div>
+        </article>
         <div class="hidden" id="proposal-area">
           <div class="workspace-header"><div><p class="eyebrow">LIVE TREATY</p><h2>Round <span id="shared-round"></span></h2></div><div class="status-pill" id="shared-status"></div></div>
           <div class="demo-grid">

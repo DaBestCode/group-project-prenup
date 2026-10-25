@@ -2,7 +2,7 @@
 
 > Sign the treaty before the group chat becomes a crime scene.
 
-Group Project Prenup is a working Cubbie Hackathon Track 2 app. Each student joins the same invite room through the web app or their Cubbie agent. The coordinator compares only approved, shareable preferences and proposes a fair task split and meeting time. A private rejection starts a new negotiation round; the treaty becomes final only after every student approves.
+Group Project Prenup is a working Cubbie Hackathon Track 2 app. Each student installs the Skill in their own Cubbie, and each Cubbie joins the same invite room as a separately authenticated personal agent. The agents exchange approved constraint envelopes, receive proposals in private inboxes, and text their own students when a decision is required. A private rejection starts a new negotiation round; the treaty becomes final only after every student approves.
 
 ## Try it
 
@@ -13,18 +13,19 @@ The demo starts with a real conflict: all three agents want research and nobody 
 
 ## The student flow
 
-1. One teammate creates a named room for 2–6 people and shares the six-character invite code.
-2. Each student submits strengths, preferences, avoided work, capacity, and possible meeting windows.
-3. When the room fills, the agents negotiate a role split and shared time.
-4. Each student approves or privately rejects. Rejection shares only the newly unavailable role.
-5. Unanimous approval signs the treaty and persists it for the group.
+1. One student's Cubbie creates a named room for 2–6 agents and shares the six-character invite code.
+2. Every teammate's Cubbie joins with its own private token and sends only its student's approved constraint envelope.
+3. The coordinator sends the negotiated role split and meeting time to each agent's authenticated inbox.
+4. A background watcher lets each Cubbie text its own student for confirmation.
+5. The student's reply makes their agent approve or privately reject. Rejection shares only the newly unavailable role.
+6. Unanimous approval signs the treaty and sends a final notice to every personal agent.
 
 The public room response contains names, approval state, and the proposal. It does not contain raw profiles, participant tokens, calendar details, or private explanations. Tokens are hashed before storage.
 
 ## Architecture
 
 - `worker/index.js` provides the room API and serves the web app on Cloudflare Workers.
-- Cloudflare D1 persists rooms, redacted profiles, negotiation rounds, and approvals.
+- Cloudflare D1 persists rooms, redacted profiles, negotiation rounds, approvals, and per-agent protocol messages.
 - `static/negotiator.js` is the deterministic, explainable solver shared by the browser demo and Worker.
 - `static/room.html` is the live invite-room UI; `static/index.html` remains the quick judge demo.
 - `skills/group-project-prenup/` is an installable Cubbie Skill with coordinator and Supermemory clients.
@@ -75,6 +76,15 @@ python3 skills/group-project-prenup/scripts/coordinator.py confirm --room "ABC23
 
 The join command saves the participant token under `~/.config/group-project-prenup/rooms.json` with owner-only permissions. The Skill requires the student's approval before joining or confirming.
 
+After joining, Cubbie runs the watcher as a background task and uses its output for the owner-facing text:
+
+```bash
+python3 skills/group-project-prenup/scripts/coordinator.py watch --room "ABC234" --timeout 300
+python3 skills/group-project-prenup/scripts/coordinator.py inbox --room "ABC234"
+```
+
+`watch` returns only when this student needs to decide or when the treaty is signed. `inbox` proves the actual message path: personal agent → coordinator for constraints and decisions; coordinator → personal agent for proposals and completion.
+
 ## Optional Supermemory
 
 The app works without an API key. To recall durable preferences, set `SUPERMEMORY_API_KEY` where the Skill runs:
@@ -93,6 +103,7 @@ The adapter uses Supermemory v5 namespaces and excludes current availability, ca
 | `POST` | `/api/rooms` | Create a room with `title` and `expected_members` |
 | `POST` | `/api/rooms/:code/join` | Join with an approved shareable profile |
 | `GET` | `/api/rooms/:code` | Read the redacted public room state |
+| `GET` | `/api/rooms/:code/inbox` | Read this authenticated personal agent's messages |
 | `POST` | `/api/rooms/:code/confirm` | Approve or reject using the participant bearer token |
 | `GET` | `/api/health` | Check the coordinator and D1 binding |
 
@@ -106,7 +117,7 @@ python3 -m py_compile server.py negotiator.py \
   skills/group-project-prenup/scripts/coordinator.py
 ```
 
-The tests cover negotiation fairness, private-data redaction, consent state, persistence helpers, the browser engine, and the Worker profile boundary. The full Worker flow has also been exercised against local D1 from creation through a rejected round and unanimous signing.
+The tests cover negotiation fairness, private-data redaction, consent state, owner notification text, persistence helpers, the browser engine, and the Worker profile boundary. The full protocol has also been exercised with two separate agent identities and inboxes from constraint exchange through rejection, renegotiation, owner approval, and signed notices.
 
 ## Current limits
 

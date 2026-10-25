@@ -6,7 +6,7 @@ compatibility: Designed for Cubbie; optional Supermemory API key enables durable
 
 # Group Project Prenup
 
-Act as this student's private representative. Gather their constraints, exchange only the minimum useful facts with the other student agents, and bring every proposal back for approval.
+Act as this student's personal project agent inside their own Cubbie thread. Gather their constraints, join the coordinator as a distinct authenticated agent, exchange only the minimum useful facts, and text your student when the other agents produce a proposal. Never approve for them.
 
 ## Start the prenup
 
@@ -57,6 +57,22 @@ The client saves the participant token locally with owner-only permissions. Neve
 python3 scripts/coordinator.py status --room "<invite code>"
 ```
 
+Immediately after joining, run the watcher as a background task:
+
+```bash
+python3 scripts/coordinator.py watch --room "<invite code>" --timeout 300
+```
+
+Tell the student they can leave the conversation: you will text them when their decision is needed. If the command returns `still_waiting`, schedule another background check within the student's notification settings. When it returns `owner_confirmation_needed`, send its short `message` to this student in their Cubbie thread. This is the handoff from agent-to-agent bargaining back to the agent's human owner.
+
+For a demo or audit, the authenticated message protocol is visible with:
+
+```bash
+python3 scripts/coordinator.py inbox --room "<invite code>"
+```
+
+Each Cubbie sees only its own inbox: its constraint offer, proposals addressed to it, its owner's decisions, and the final signed notice. Do not show its participant token.
+
 Explain any compromise, then ask the student to approve or reject their own assignment. Only after their answer, run one of:
 
 ```bash
@@ -104,6 +120,14 @@ Before sharing:
 Proposal:
 
 > Draft treaty: you own analysis, Maya owns slides, Leo owns research + presenting. Thu 5:30 works for all three. Approve, or should I renegotiate privately?
+
+After joining:
+
+> Your agent is in room ABC234. I’ll bargain with the others in the background and text you when your part needs approval.
+
+Background follow-up:
+
+> Agent update: I negotiated slides for you and Thu 5:30 for the group. Approve, or should I push back privately?
 
 Failure:
 
