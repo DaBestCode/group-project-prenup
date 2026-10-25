@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f3ea" />
+    <title>Group Project Prenup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Group Project Prenup home">
+        <span class="brand-mark">GP</span>
+        <span>Group Project Prenup</span>
+      </a>
+      <span class="track-badge">Cubbie Hackathon · Track 2</span>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">AGENTS NEGOTIATE. STUDENTS DECIDE.</p>
+          <h1>Sign the treaty before the group chat becomes a <em>crime scene.</em></h1>
+          <p class="lede">Three personal agents privately compare schedules, strengths, and hard no's—then propose a fair project split without leaking the reasons behind anyone's constraints.</p>
+          <div class="hero-actions">
+            <button class="button button-primary" id="start-button">Negotiate the prenup <span>→</span></button>
+            <button class="button button-ghost" id="reset-button">Reset demo</button>
+          </div>
+          <div class="trust-row">
+            <span>◉ Private by default</span>
+            <span>◉ Every student confirms</span>
+            <span>◉ Zero group-chat archaeology</span>
+          </div>
+        </div>
+        <aside class="hero-card">
+          <div class="paperclip"></div>
+          <p class="stamp">PRENUP № 001</p>
+          <p class="memo">For: COM 225 Group Project</p>
+          <blockquote>“I thought someone else was doing the slides.”</blockquote>
+          <div class="strike">A sentence we can prevent.</div>
+          <div class="signature-line"><span>Signed:</span><strong>pending negotiation</strong></div>
+        </aside>
+      </section>
+
+      <section class="agents-section" aria-labelledby="agents-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">THE PRIVATE SIDE</p>
+            <h2 id="agents-title">Meet the personal agents</h2>
+          </div>
+          <p>We show their private context for the demo. The negotiation shares only the minimum useful constraints.</p>
+        </div>
+        <div class="agent-grid" id="agent-grid"></div>
+      </section>
+
+      <section class="workspace" id="workspace" aria-live="polite">
+        <div class="workspace-empty" id="empty-state">
+          <span class="empty-icon">↝</span>
+          <h2>No awkward negotiation yet.</h2>
+          <p>Start the demo to let the three agents bargain over roles, workload, and one meeting time.</p>
+        </div>
+
+        <div class="workspace-content hidden" id="workspace-content">
+          <div class="workspace-header">
+            <div>
+              <p class="eyebrow">LIVE NEGOTIATION</p>
+              <h2>Round <span id="round-number">1</span></h2>
+            </div>
+            <div class="status-pill" id="status-pill">Awaiting confirmation</div>
+          </div>
+
+          <div class="demo-grid">
+            <article class="panel conversation-panel">
+              <div class="panel-title">
+                <div>
+                  <span class="panel-kicker">AGENT TRAFFIC</span>
+                  <h3>What they shared</h3>
+                </div>
+                <span class="live-dot">live</span>
+              </div>
+              <div class="conversation" id="conversation"></div>
+              <div class="privacy-note">
+                <span>🔒</span>
+                <div><strong>Still private</strong><br />Course names, calendar event titles, jobs, family details, and rejection reasons.</div>
+              </div>
+            </article>
+
+            <article class="panel treaty-panel">
+              <div class="panel-title">
+                <div>
+                  <span class="panel-kicker">PROPOSED TREATY</span>
+                  <h3>The least-cursed split</h3>
+                </div>
+                <div class="fairness"><strong id="fairness-score">—</strong><span>fairness</span></div>
+              </div>
+              <div class="conflict-box" id="conflict-box"></div>
+              <div class="assignments" id="assignments"></div>
+              <div class="meeting-row">
+                <span class="meeting-icon">◷</span>
+                <div><span>Group sync</span><strong id="meeting-time">—</strong></div>
+                <small id="meeting-note"></small>
+              </div>
+            </article>
+          </div>
+
+          <article class="consent-panel">
+            <div class="consent-copy">
+              <p class="eyebrow">HUMANS GET THE LAST WORD</p>
+              <h2 id="consent-title">Three signatures. Zero surprise labor.</h2>
+              <p id="consent-description">Each agent brings the proposal back to its student. One rejection reopens the whole negotiation without exposing why.</p>
+            </div>
+            <div class="approval-grid" id="approval-grid"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="how-it-works">
+        <p class="eyebrow">THE PROTOCOL</p>
+        <div class="steps">
+          <article><span>01</span><h3>Keep the mess private</h3><p>Each agent knows its student's schedule, strengths, preferences, and constraints.</p></article>
+          <article><span>02</span><h3>Share only the useful bits</h3><p>Agents exchange availability, role signals, and capacity—not personal explanations.</p></article>
+          <article><span>03</span><h3>Negotiate the collision</h3><p>The solver balances skill fit, workload, unwanted roles, and a meeting everyone can make.</p></article>
+          <article><span>04</span><h3>Ask every human</h3><p>The treaty becomes real only after unanimous confirmation. A no triggers another round.</p></article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Built for the Cubbie Hackathon</span>
+      <span>Because “who's doing what?” should have an answer.</span>
+    </footer>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
