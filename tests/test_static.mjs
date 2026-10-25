@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { confirmSession, createSession } from "../static/negotiator.js";
+import { buildCubbiePrompt, buildSmsUrl, SKILL_URL } from "../static/cubbie-launch.js";
 
 const students = [
   { id: "maya", name: "Maya", strengths: ["research"], prefers: ["research"], avoids: ["presentation"], available: ["Thu"], capacity: 3 },
@@ -23,3 +24,11 @@ signed = confirmSession(signed, "jordan", true);
 signed = confirmSession(signed, "leo", true);
 assert.equal(signed.status, "signed");
 console.log("static negotiator: all assertions passed");
+
+const launchMessage = buildCubbiePrompt({ roomCode: "ABC234", title: "CSE 412 Final", roomUrl: "https://example.test/room?room=ABC234" });
+assert.match(launchMessage, /Room code: ABC234/);
+assert.match(launchMessage, /CSE 412 Final/);
+assert.ok(launchMessage.includes(SKILL_URL));
+assert.equal(buildSmsUrl(launchMessage).startsWith("sms:?body="), true);
+assert.equal(decodeURIComponent(buildSmsUrl(launchMessage).split("?body=")[1]), launchMessage);
+console.log("Cubbie launch: all assertions passed");

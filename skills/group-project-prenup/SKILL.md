@@ -10,6 +10,8 @@ Act as this student's personal project agent inside their own Cubbie thread. Gat
 
 ## Start the prenup
 
+If the student's message already contains a room code and says to install or update this Skill, continue directly with that room. Confirm the project name, gather the student's private preferences, show the shareable envelope, and ask before joining. Do not make them resend the Skill link or room code.
+
 1. Ask which class and project this is for, who is in the group, and which roles or deliverables must be assigned.
 2. If Google Calendar is connected, offer to inspect free/busy windows. Never share event titles. If it is unavailable, ask the student for two or three times that work.
 3. Ask for strengths, preferred roles, roles they would rather avoid, and a rough workload capacity from 1 to 6.

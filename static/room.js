@@ -1,3 +1,5 @@
+import { buildCubbiePrompt, buildSmsUrl } from "./cubbie-launch.js";
+
 const $ = (selector) => document.querySelector(selector);
 const params = new URLSearchParams(window.location.search);
 const roomCode = (params.get("room") || "").toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6);
@@ -41,10 +43,26 @@ function goToRoom(code) {
   window.location.href = next.toString();
 }
 
+function roomInviteUrl(code = roomCode) {
+  const invite = new URL("./room", window.location.href);
+  invite.search = "";
+  invite.searchParams.set("room", code);
+  return invite.toString();
+}
+
+function renderCubbieLaunch() {
+  if (roomCode.length !== 6) return;
+  const prompt = buildCubbiePrompt({ roomCode, title: room?.title, roomUrl: roomInviteUrl() });
+  $("#cubbie-launch-card").classList.remove("hidden");
+  $("#cubbie-message").value = prompt;
+  $("#open-in-cubbie").href = buildSmsUrl(prompt);
+}
+
 async function loadRoom() {
   room = await request(`/api/rooms/${roomCode}`);
   const mine = membership();
   agentInbox = mine ? await request(`/api/rooms/${roomCode}/inbox`, { headers: { Authorization: `Bearer ${mine.token}` } }) : null;
+  renderCubbieLaunch();
   $("#start-screen").classList.add("hidden");
   if (!mine && room.status === "lobby" && room.spots_left > 0) {
     $("#join-screen").classList.remove("hidden");
@@ -188,10 +206,28 @@ $("#join-form").addEventListener("submit", async (event) => {
 
 $("input[name=capacity]").addEventListener("input", (event) => { $("#capacity-output").textContent = event.target.value; });
 $("#copy-invite").addEventListener("click", async () => {
-  const invite = new URL(window.location.href);
-  invite.searchParams.set("room", room.room_code);
-  await navigator.clipboard.writeText(invite.toString());
-  $("#copy-invite").textContent = "Copied ✓";
+  const url = roomInviteUrl(room.room_code);
+  if (navigator.share) {
+    try { await navigator.share({ title: `${room.title} · Group Project Prenup`, text: "Join our agent negotiation room:", url }); }
+    catch (error) { if (error.name !== "AbortError") showAlert("The share sheet could not open."); }
+  } else {
+    await navigator.clipboard.writeText(url);
+    $("#copy-invite").textContent = "Copied ✓";
+  }
 });
 
-if (roomCode.length === 6) loadRoom().catch((error) => showAlert(error.message));
+$("#share-cubbie-invite").addEventListener("click", async () => {
+  const text = $("#cubbie-message").value;
+  if (navigator.share) {
+    try { await navigator.share({ title: `${room?.title || "Group project"} · Cubbie agent invite`, text }); }
+    catch (error) { if (error.name !== "AbortError") showAlert("The share sheet could not open."); }
+  } else {
+    await navigator.clipboard.writeText(text);
+    $("#share-cubbie-invite").textContent = "Message copied ✓";
+  }
+});
+
+if (roomCode.length === 6) {
+  renderCubbieLaunch();
+  loadRoom().catch((error) => showAlert(error.message));
+}

@@ -178,6 +178,15 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 .room-card input, .room-card select, .room-card textarea { width: 100%; padding: 14px; border: 1px solid var(--ink); border-radius: 0; background: rgba(255,255,255,.8); color: var(--ink); font: 500 14px Manrope, sans-serif; }
 .room-card textarea { resize: vertical; }
 .room-alert { margin-bottom: 20px; padding: 14px 18px; color: #8c2900; border: 1px solid var(--orange); background: #fff0e8; }
+.cubbie-launch-card { display: grid; grid-template-columns: 1.05fr .95fr; gap: 34px; margin-bottom: 24px; background: #dcecff; }
+.cubbie-launch-card h2 { margin-bottom: 12px; }
+.cubbie-launch-card p { color: #555e59; line-height: 1.55; }
+.cubbie-launch-card label { align-content: start; }
+.cubbie-launch-card textarea { min-height: 230px; font: 400 12px/1.5 "DM Mono", monospace; text-transform: none; }
+.cubbie-launch-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.cubbie-launch-actions a { text-decoration: none; }
+.cubbie-launch-help { margin: 14px 0 0; font-size: 12px; }
+.cubbie-launch-help a { color: var(--blue); }
 .join-card { max-width: 780px; margin: 0 auto; }
 .room-card-heading, .shared-room-header { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .room-code { padding: 10px 13px; border: 1px solid var(--ink); background: var(--pink); font: 500 18px "DM Mono", monospace; letter-spacing: .12em; }
@@ -210,6 +219,7 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .hero-card { margin-top: 30px; }
   .agent-grid, .steps, .sponsor-grid { grid-template-columns: 1fr; }
   .room-start, .lobby-grid { grid-template-columns: 1fr; }
+  .cubbie-launch-card { grid-template-columns: 1fr; }
   .personal-agent-card { grid-template-columns: 1fr; }
   .section-heading, .demo-grid, .consent-panel { display: grid; grid-template-columns: 1fr; }
   .section-heading { align-items: start; }

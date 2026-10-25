@@ -25,6 +25,20 @@
 
       <div class="room-alert hidden" id="room-alert" role="alert"></div>
 
+      <section class="room-card cubbie-launch-card hidden" id="cubbie-launch-card">
+        <div>
+          <span class="panel-kicker">ONE-TAP HANDOFF</span>
+          <h2>Open this room in Cubbie</h2>
+          <p>Each student uses their own private Cubbie thread. This prepares the Skill, room code, and agent instructions as one message.</p>
+          <div class="cubbie-launch-actions">
+            <a class="button button-primary" id="open-in-cubbie" href="#">Open in Cubbie →</a>
+            <button class="button button-ghost" id="share-cubbie-invite" type="button">Share with teammate</button>
+          </div>
+          <p class="cubbie-launch-help">Choose your existing Cubbie conversation in Messages, then tap Send. Need to connect messaging first? <a href="https://cubbie.ai/apple-messages" target="_blank" rel="noreferrer">Open Cubbie's official setup</a>.</p>
+        </div>
+        <label>Ready-to-send message<textarea id="cubbie-message" rows="9" readonly></textarea></label>
+      </section>
+
       <section class="room-start" id="start-screen">
         <article class="room-card accent-card">
           <span class="panel-kicker">START THE GROUP</span>
@@ -63,7 +77,7 @@
       <section class="hidden" id="room-screen">
         <div class="shared-room-header">
           <div><p class="eyebrow">SHARED ROOM <span id="dashboard-code"></span></p><h2 id="dashboard-title"></h2></div>
-          <button class="button button-ghost" id="copy-invite">Copy invite link</button>
+          <button class="button button-ghost" id="copy-invite">Share room</button>
         </div>
         <div class="lobby-grid">
           <article class="room-card"><span class="panel-kicker">TEAM</span><h3 id="lobby-message">Waiting for teammates</h3><div class="member-list" id="member-list"></div></article>

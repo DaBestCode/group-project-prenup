@@ -9,6 +9,8 @@ Group Project Prenup is a working Cubbie Hackathon Track 2 app. Each student ins
 - [Interactive demo](https://dabestcode.github.io/group-project-prenup/) — instant, account-free sample in the browser
 - [Live shared rooms](https://group-project-prenup.pjanga.workers.dev/room) — persistent invite rooms for separate student agents
 
+After a room is created, **Open in Cubbie** launches the phone's messaging app with one complete message containing the Skill link, project, room URL, room code, and watcher instruction. **Share with teammate** opens the native share sheet with the same ready-to-send handoff. Cubbie does not publish a universal messaging number, so the student selects their existing Cubbie conversation and taps Send; no links or codes need to be copied separately.
+
 The demo starts with a real conflict: all three agents want research and nobody wants slides. Reject an assignment to see the agents bargain again under the new private constraint.
 
 ## The student flow
