@@ -29,7 +29,7 @@ The live room includes an **Agent Control Room** generated from the Worker proto
 
 ## Discord agent room
 
-The same protocol can run visibly in a Discord text channel. Each stateful student agent posts with its own display name and generated avatar, while the coordinator appears as a separate participant. The relay includes bids, drafts, counteroffers, final evaluations, owner approvals, and the signed treaty. Discord receives only the sanitized public trace.
+The same protocol can run visibly in a Discord text channel. Each stateful student agent posts with its own display name and generated avatar, while the coordinator appears as a separate participant. The relay includes bids, drafts, counteroffers, final evaluations, owner approvals, and the signed treaty. Discord receives only the sanitized public trace. Discord does not offer an embeddable live text-channel view, so the website stores each successful Discord delivery receipt and renders a synchronized mirror with a direct link to the original message.
 
 Create a webhook under **Server Settings → Integrations → Webhooks**, choose the demo channel, and copy its URL. Keep that URL secret:
 
@@ -45,7 +45,7 @@ Add the non-secret channel URL to `wrangler.jsonc` so the room can show **Watch 
 }
 ```
 
-Then run `npm run deploy`. The Worker posts messages in order and respects Discord webhook rate limits. Sender names and avatars are overridden per message, which Discord supports for webhooks; the secret webhook URL is never returned by the API or browser.
+Then run `npm run db:migrate:remote` and `npm run deploy`. The Worker posts messages in order, respects Discord webhook rate limits, and records Discord's returned message ID. Sender names and avatars are overridden per message, which Discord supports for webhooks; the secret webhook URL is never returned by the API or browser.
 
 The public room response contains names, approval state, and the proposal. It does not contain raw profiles, participant tokens, calendar details, or private explanations. Tokens are hashed before storage.
 
@@ -54,7 +54,7 @@ The public room response contains names, approval state, and the proposal. It do
 - `worker/index.js` provides the room API and serves the web app on Cloudflare Workers.
 - `worker/agent-policy.js` gives every participant an independent bid, evaluation, counteroffer, and escalation policy.
 - `worker/discord-relay.js` carries those agent events into one Discord channel with distinct agent identities.
-- Cloudflare D1 persists rooms, redacted profiles, personal-agent state, negotiation rounds, approvals, and protocol messages.
+- Cloudflare D1 persists rooms, redacted profiles, personal-agent state, negotiation rounds, approvals, protocol messages, and Discord delivery receipts.
 - `static/negotiator.js` is the deterministic, explainable solver shared by the browser demo and Worker.
 - `static/room.html` is the live invite-room UI; `static/index.html` remains the quick judge demo.
 - `skills/group-project-prenup/` is an installable Cubbie Skill with coordinator and Supermemory clients.

@@ -275,6 +275,8 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 .discord-message-head span { color: #949ba4; font: 400 9px "DM Mono", monospace; }
 .discord-chat-message b { display: block; margin-top: 3px; color: var(--acid); font: 500 9px "DM Mono", monospace; }
 .discord-chat-message p { margin: 3px 0 0; color: #dbdee1; font-size: 12px; line-height: 1.45; }
+.discord-proof-link { display: inline-block; margin-top: 7px; color: #9cb4ff; font: 500 9px "DM Mono", monospace; text-decoration: none; }
+.discord-proof-link:hover { color: white; text-decoration: underline; }
 .technical-proof { margin-top: 20px; color: white; background: #151713; border: 1px solid var(--ink); }
 .technical-proof summary { padding: 16px 20px; cursor: pointer; color: var(--acid); font: 500 10px "DM Mono", monospace; text-transform: uppercase; }
 .technical-proof .protocol-trace { border-top: 1px solid rgba(255,255,255,.16); }

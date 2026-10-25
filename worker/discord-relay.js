@@ -50,7 +50,7 @@ async function postDiscord(webhookUrl, payload, fetchImpl = fetch, wait = (ms) =
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (response.ok) return;
+    if (response.ok) return response.json();
     if (response.status !== 429) throw new Error(`Discord webhook returned ${response.status}.`);
     const rateLimit = await response.json().catch(() => ({}));
     await wait(Math.max(250, Math.ceil(Number(rateLimit.retry_after || 1) * 1000)));
@@ -61,10 +61,12 @@ async function postDiscord(webhookUrl, payload, fetchImpl = fetch, wait = (ms) =
 async function relayTrace(webhookUrl, trace, room, options = {}) {
   if (!validDiscordWebhook(webhookUrl)) throw new Error("DISCORD_WEBHOOK_URL is not a valid Discord webhook URL.");
   const events = discordEvents(trace);
+  const receipts = [];
   for (const event of events) {
-    await postDiscord(webhookUrl, discordPayload(event, room), options.fetchImpl, options.wait);
+    const message = await postDiscord(webhookUrl, discordPayload(event, room), options.fetchImpl, options.wait);
+    receipts.push({ event, message });
   }
-  return events.length;
+  return receipts;
 }
 
 export { discordEvents, discordPayload, relayTrace, validDiscordWebhook };

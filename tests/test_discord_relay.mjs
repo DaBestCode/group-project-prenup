@@ -20,13 +20,16 @@ assert.equal(payload.allowed_mentions.parse.length, 0);
 assert.match(payload.avatar_url, /agent-avatar/);
 
 const sent = [];
-const count = await relayTrace(webhook, trace, { code: "ABC234", url: "https://example.test/room?room=ABC234" }, {
+let messageId = 100;
+const receipts = await relayTrace(webhook, trace, { code: "ABC234", url: "https://example.test/room?room=ABC234" }, {
   fetchImpl: async (url, options) => {
     sent.push({ url, payload: JSON.parse(options.body) });
-    return { ok: true, status: 200 };
+    messageId += 1;
+    return { ok: true, status: 200, json: async () => ({ id: String(messageId), channel_id: "200", guild_id: "300" }) };
   },
 });
-assert.equal(count, 5);
+assert.equal(receipts.length, 5);
+assert.equal(receipts[0].message.guild_id, "300");
 assert.equal(sent[0].payload.username, "Maya's agent");
 assert.equal(JSON.stringify(sent).includes("token_value"), true);
 assert.equal(JSON.stringify(sent).includes("private"), false);

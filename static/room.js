@@ -111,13 +111,14 @@ function renderRoom() {
 }
 
 function renderDiscordChat() {
-  const trace = room.proposal.protocol_trace || [];
-  $("#discord-chat").innerHTML = trace.map((event) => {
+  const delivered = room.discord?.messages || [];
+  const events = delivered.length ? delivered : (room.proposal.protocol_trace || []);
+  $("#discord-chat").innerHTML = events.map((event) => {
     const coordinator = event.actor === "Coordinator";
     const initial = coordinator ? "GP" : event.actor.trim().charAt(0).toUpperCase();
     return `<div class="discord-chat-message">
       <span class="discord-avatar ${coordinator ? "coordinator-avatar" : ""}">${escapeHtml(initial)}</span>
-      <div><div class="discord-message-head"><strong>${escapeHtml(coordinator ? "Prenup Coordinator" : event.actor)}</strong><span>${event.round ? `Round ${event.round}` : "Setup"}</span></div><b>${escapeHtml(event.action)}</b><p>${escapeHtml(event.outcome)}</p></div>
+      <div><div class="discord-message-head"><strong>${escapeHtml(coordinator ? "Prenup Coordinator" : event.actor)}</strong><span>${event.round ? `Round ${event.round}` : "Setup"}</span></div><b>${escapeHtml(event.action)}</b><p>${escapeHtml(event.outcome)}</p>${event.message_url ? `<a class="discord-proof-link" href="${escapeHtml(event.message_url)}" target="_blank" rel="noreferrer">View this message in Discord ↗</a>` : ""}</div>
     </div>`;
   }).join("");
 }
@@ -125,7 +126,8 @@ function renderDiscordChat() {
 function renderDiscordRelay() {
   const status = $("#discord-relay-status");
   const link = $("#discord-room-link");
-  status.textContent = room.discord?.connected ? "Discord relay live" : "Discord preview";
+  const delivered = room.discord?.messages?.length || 0;
+  status.textContent = delivered ? `${delivered} Discord ${delivered === 1 ? "message" : "messages"} synced` : room.discord?.connected ? "Discord connected" : "Discord preview";
   if (room.discord?.channel_url) {
     link.href = room.discord.channel_url;
     link.classList.remove("hidden");

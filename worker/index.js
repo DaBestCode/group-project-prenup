@@ -28,6 +28,13 @@ function safeDiscordChannelUrl(value) {
   return /^https:\/\/(?:canary\.|ptb\.)?discord\.com\/channels\/\d+\/\d+$/.test(url) ? url : null;
 }
 
+function discordMessageUrl(guildId, channelId, messageId = "") {
+  const snowflake = /^\d+$/;
+  if (!snowflake.test(String(guildId || "")) || !snowflake.test(String(channelId || ""))) return null;
+  const base = `https://discord.com/channels/${guildId}/${channelId}`;
+  return messageId && snowflake.test(String(messageId)) ? `${base}/${messageId}` : base;
+}
+
 function agentAvatar(path) {
   const actor = cleanText(decodeURIComponent(path), 80) || "Agent";
   let hash = 0;
@@ -45,8 +52,30 @@ function scheduleDiscord(env, context, trace, request, roomId) {
   if (!validDiscordWebhook(env.DISCORD_WEBHOOK_URL) || !context?.waitUntil) return;
   const roomUrl = new URL("/room", request.url);
   roomUrl.searchParams.set("room", roomId);
-  context.waitUntil(relayTrace(env.DISCORD_WEBHOOK_URL, trace, { code: roomId, url: roomUrl.toString() })
-    .catch((error) => console.error("Discord relay failed", error)));
+  context.waitUntil((async () => {
+    const receipts = await relayTrace(env.DISCORD_WEBHOOK_URL, trace, { code: roomId, url: roomUrl.toString() });
+    const inserts = receipts.flatMap(({ event, message }) => {
+      const messageId = String(message?.id || "");
+      const channelId = String(message?.channel_id || "");
+      const guildId = message?.guild_id == null ? null : String(message.guild_id);
+      if (!/^\d+$/.test(messageId) || !/^\d+$/.test(channelId) || (guildId && !/^\d+$/.test(guildId))) return [];
+      return [env.DB.prepare(
+        `INSERT OR IGNORE INTO discord_messages
+          (room_id, discord_message_id, guild_id, channel_id, actor, action, outcome, round)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).bind(
+        roomId,
+        messageId,
+        guildId,
+        channelId,
+        cleanText(event.actor, 80),
+        cleanText(event.action, 80),
+        cleanText(event.outcome, 500),
+        Math.max(0, Number(event.round) || 0),
+      )];
+    });
+    if (inserts.length) await env.DB.batch(inserts);
+  })().catch((error) => console.error("Discord relay failed", error)));
 }
 
 async function body(request) {
@@ -127,6 +156,21 @@ async function participantsFor(roomId, env) {
   return result.results || [];
 }
 
+async function discordMessagesFor(roomId, env) {
+  const result = await env.DB.prepare(
+    `SELECT discord_message_id, guild_id, channel_id, actor, action, outcome, round, created_at
+      FROM discord_messages WHERE room_id = ? ORDER BY id`,
+  ).bind(roomId).all();
+  return (result.results || []).map((message) => ({
+    actor: message.actor,
+    action: message.action,
+    outcome: message.outcome,
+    round: message.round,
+    created_at: message.created_at,
+    message_url: discordMessageUrl(message.guild_id, message.channel_id, message.discord_message_id),
+  }));
+}
+
 function agentMessage(env, roomId, participantId, sender, recipient, kind, message) {
   return env.DB.prepare(
     "INSERT INTO agent_messages (room_id, participant_id, sender, recipient, kind, message_json) VALUES (?, ?, ?, ?, ?, ?)",
@@ -138,7 +182,11 @@ async function roomView(roomId, env) {
     "SELECT id, title, expected_members, status, round, proposal_json, created_at FROM rooms WHERE id = ?",
   ).bind(roomId).first();
   if (!room) throw new HttpError(404, "That room does not exist.");
-  const participants = await participantsFor(roomId, env);
+  const [participants, discordMessages] = await Promise.all([
+    participantsFor(roomId, env),
+    discordMessagesFor(roomId, env),
+  ]);
+  const receiptChannelUrl = discordMessages.find((message) => message.message_url)?.message_url?.replace(/\/\d+$/, "") || null;
   return {
     room_code: room.id,
     title: room.title,
@@ -148,7 +196,8 @@ async function roomView(roomId, env) {
     proposal: room.proposal_json ? JSON.parse(room.proposal_json) : null,
     discord: {
       connected: validDiscordWebhook(env.DISCORD_WEBHOOK_URL),
-      channel_url: safeDiscordChannelUrl(env.DISCORD_CHANNEL_URL),
+      channel_url: safeDiscordChannelUrl(env.DISCORD_CHANNEL_URL) || receiptChannelUrl,
+      messages: discordMessages,
     },
     participants: participants.map(({ id, name, approval, agent_state }) => ({ id, name, approval, agent_state })),
     spots_left: Math.max(0, room.expected_members - participants.length),
@@ -499,4 +548,4 @@ export default {
   },
 };
 
-export { api, cleanList, safeProfile, tokenHash };
+export { api, cleanList, discordMessageUrl, safeProfile, tokenHash };
