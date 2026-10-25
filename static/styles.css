@@ -116,6 +116,9 @@ blockquote { margin: 20px 0; font-size: 28px; line-height: 1.25; font-weight: 80
 .control-room-panel { margin-bottom: 20px; background: #151713; color: white; box-shadow: 10px 10px 0 var(--blue); }
 .control-room-panel .panel-title { border-color: rgba(255,255,255,.16); }
 .control-room-panel .panel-kicker { color: var(--acid); }
+.relay-badges { display: flex; align-items: center; gap: 12px; }
+.discord-room-link { padding: 7px 9px; color: white; border: 1px solid rgba(255,255,255,.35); font: 500 9px "DM Mono", monospace; text-decoration: none; }
+.discord-room-link:hover { color: var(--acid); border-color: var(--acid); }
 .trace-explainer { margin: 0; padding: 15px 24px; color: #b8bcb4; border-bottom: 1px solid rgba(255,255,255,.16); font-size: 12px; }
 .protocol-trace { max-height: 390px; overflow: auto; }
 .trace-event { display: grid; grid-template-columns: 38px 190px minmax(220px, 1fr) 74px; gap: 14px; align-items: center; padding: 13px 24px; border-bottom: 1px solid rgba(255,255,255,.12); }
@@ -262,4 +265,5 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .room-card-heading, .shared-room-header, .share-preview, .shared-actions { align-items: stretch; flex-direction: column; }
   .trace-event { grid-template-columns: 30px 1fr; }
   .trace-event p { grid-column: 2; }
+  .control-room-panel .panel-title, .relay-badges { align-items: flex-start; flex-direction: column; }
 }

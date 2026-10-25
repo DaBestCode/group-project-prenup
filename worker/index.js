@@ -1,5 +1,6 @@
 import { negotiate } from "../static/negotiator.js";
 import { buildPublicBidSummary, buildRoleBid, createAgentPolicy, evaluateProposal } from "./agent-policy.js";
+import { relayTrace, validDiscordWebhook } from "./discord-relay.js";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CORS = {
@@ -20,6 +21,32 @@ function json(payload, status = 200) {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8", ...CORS },
   });
+}
+
+function safeDiscordChannelUrl(value) {
+  const url = String(value || "");
+  return /^https:\/\/(?:canary\.|ptb\.)?discord\.com\/channels\/\d+\/\d+$/.test(url) ? url : null;
+}
+
+function agentAvatar(path) {
+  const actor = cleanText(decodeURIComponent(path), 80) || "Agent";
+  let hash = 0;
+  for (const character of actor) hash = ((hash << 5) - hash + character.charCodeAt(0)) | 0;
+  const colors = ["4f68ff", "ff8fcf", "d9ff4f", "ff6b35", "65d6ad"];
+  const background = colors[Math.abs(hash) % colors.length];
+  const initial = (actor.match(/[A-Za-z0-9]/)?.[0] || "A").toUpperCase();
+  const foreground = background === "d9ff4f" ? "1d201c" : "ffffff";
+  return new Response(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#${background}"/><path d="M30 38h68v52H77l-13 13-13-13H30z" fill="none" stroke="#${foreground}" stroke-width="6"/><text x="64" y="78" text-anchor="middle" font-family="sans-serif" font-size="42" font-weight="700" fill="#${foreground}">${initial}</text></svg>`, {
+    headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" },
+  });
+}
+
+function scheduleDiscord(env, context, trace, request, roomId) {
+  if (!validDiscordWebhook(env.DISCORD_WEBHOOK_URL) || !context?.waitUntil) return;
+  const roomUrl = new URL("/room", request.url);
+  roomUrl.searchParams.set("room", roomId);
+  context.waitUntil(relayTrace(env.DISCORD_WEBHOOK_URL, trace, { code: roomId, url: roomUrl.toString() })
+    .catch((error) => console.error("Discord relay failed", error)));
 }
 
 async function body(request) {
@@ -119,6 +146,10 @@ async function roomView(roomId, env) {
     status: room.status,
     round: room.round,
     proposal: room.proposal_json ? JSON.parse(room.proposal_json) : null,
+    discord: {
+      connected: validDiscordWebhook(env.DISCORD_WEBHOOK_URL),
+      channel_url: safeDiscordChannelUrl(env.DISCORD_CHANNEL_URL),
+    },
     participants: participants.map(({ id, name, approval, agent_state }) => ({ id, name, approval, agent_state })),
     spots_left: Math.max(0, room.expected_members - participants.length),
     created_at: room.created_at,
@@ -279,9 +310,10 @@ async function runAgentNegotiation(roomId, env, startingRound) {
     ).bind(roomId),
     ...proposalMessages,
   ]);
+  return result;
 }
 
-async function joinRoom(request, env, roomId) {
+async function joinRoom(request, env, roomId, context) {
   const room = await env.DB.prepare("SELECT expected_members, status FROM rooms WHERE id = ?").bind(roomId).first();
   if (!room) throw new HttpError(404, "That room does not exist.");
   if (room.status !== "lobby") throw new HttpError(409, "Negotiation has already started for this room.");
@@ -321,7 +353,10 @@ async function joinRoom(request, env, roomId) {
     }),
   ]);
 
-  if (existing.length + 1 === room.expected_members) await runAgentNegotiation(roomId, env, 1);
+  if (existing.length + 1 === room.expected_members) {
+    const proposal = await runAgentNegotiation(roomId, env, 1);
+    scheduleDiscord(env, context, proposal.protocol_trace, request, roomId);
+  }
   return json({ participant_id: participantId, participant_token: token, room: await roomView(roomId, env) }, 201);
 }
 
@@ -356,7 +391,7 @@ async function agentInbox(request, roomId, env) {
   });
 }
 
-async function confirmRoom(request, env, roomId) {
+async function confirmRoom(request, env, roomId, context) {
   const room = await env.DB.prepare("SELECT status, round, proposal_json FROM rooms WHERE id = ?").bind(roomId).first();
   if (!room) throw new HttpError(404, "That room does not exist.");
   if (room.status === "signed") return json(await roomView(roomId, env));
@@ -390,6 +425,14 @@ async function confirmRoom(request, env, roomId) {
           unanimous: true,
         })),
       ]);
+      scheduleDiscord(env, context, [
+        { round: room.round, actor: `${participant.name}'s agent`, action: "OWNER APPROVED", outcome: "Reported its owner's explicit approval to the coordinator." },
+        { round: room.round, actor: "Coordinator", action: "TREATY SIGNED", outcome: "Every owner approved the same proposal." },
+      ], request, roomId);
+    } else {
+      scheduleDiscord(env, context, [
+        { round: room.round, actor: `${participant.name}'s agent`, action: "OWNER APPROVED", outcome: "Reported its owner's explicit approval to the coordinator." },
+      ], request, roomId);
     }
     return json(await roomView(roomId, env));
   }
@@ -411,7 +454,8 @@ async function confirmRoom(request, env, roomId) {
       private_reason_shared: false,
     }),
   ]);
-  await runAgentNegotiation(roomId, env, Number(room.round) + 1);
+  const revisedProposal = await runAgentNegotiation(roomId, env, Number(room.round) + 1);
+  scheduleDiscord(env, context, revisedProposal.protocol_trace, request, roomId);
   const updated = await env.DB.prepare("SELECT proposal_json FROM rooms WHERE id = ?").bind(roomId).first();
   const revised = JSON.parse(updated.proposal_json);
   revised.log.unshift({
@@ -422,7 +466,7 @@ async function confirmRoom(request, env, roomId) {
   return json(await roomView(roomId, env));
 }
 
-async function api(request, env) {
+async function api(request, env, context) {
   const url = new URL(request.url);
   const path = url.pathname;
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -434,16 +478,18 @@ async function api(request, env) {
   const roomId = match[1];
   if (request.method === "GET" && !match[2]) return json(await roomView(roomId, env));
   if (request.method === "GET" && match[2] === "inbox") return agentInbox(request, roomId, env);
-  if (request.method === "POST" && match[2] === "join") return joinRoom(request, env, roomId);
-  if (request.method === "POST" && match[2] === "confirm") return confirmRoom(request, env, roomId);
+  if (request.method === "POST" && match[2] === "join") return joinRoom(request, env, roomId, context);
+  if (request.method === "POST" && match[2] === "confirm") return confirmRoom(request, env, roomId, context);
   throw new HttpError(405, "Method not allowed.");
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, context) {
     const url = new URL(request.url);
     try {
-      if (url.pathname.startsWith("/api/")) return await api(request, env);
+      const avatar = url.pathname.match(/^\/api\/agent-avatar\/(.+)$/);
+      if (request.method === "GET" && avatar) return agentAvatar(avatar[1]);
+      if (url.pathname.startsWith("/api/")) return await api(request, env, context);
       return env.ASSETS.fetch(request);
     } catch (error) {
       if (error instanceof HttpError) return json({ error: error.message }, error.status);
