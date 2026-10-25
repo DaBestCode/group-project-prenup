@@ -33,4 +33,19 @@ assert.equal(receipts[0].message.guild_id, "300");
 assert.equal(sent[0].payload.username, "Maya's agent");
 assert.equal(JSON.stringify(sent).includes("token_value"), true);
 assert.equal(JSON.stringify(sent).includes("private"), false);
+
+const forumSent = [];
+await relayTrace(webhook, [
+  { round: 0, actor: "Coordinator", action: "ROOM OPENED", outcome: "Waiting for agents." },
+  { round: 0, actor: "Maya's agent", action: "BID SUBMITTED", outcome: "Top bid: Research." },
+], { code: "ABC234", url: "https://example.test/room?room=ABC234" }, {
+  threadName: "CSE 412 · ABC234",
+  fetchImpl: async (url, options) => {
+    forumSent.push({ url, payload: JSON.parse(options.body) });
+    return { ok: true, status: 200, json: async () => ({ id: String(++messageId), channel_id: "777", guild_id: "300" }) };
+  },
+});
+assert.equal(forumSent[0].payload.thread_name, "CSE 412 · ABC234");
+assert.equal(new URL(forumSent[1].url).searchParams.get("thread_id"), "777");
+assert.equal(forumSent[1].payload.thread_name, undefined);
 console.log("Discord agent relay: all assertions passed");

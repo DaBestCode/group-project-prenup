@@ -32,7 +32,8 @@ function discordPayload(event, room) {
 function discordEvents(trace) {
   const finalRound = Math.max(0, ...trace.map((event) => Number(event.round) || 0));
   return trace.filter((event) => (
-    event.action === "BID SUBMITTED"
+    event.action === "ROOM OPENED"
+    || event.action === "BID SUBMITTED"
     || event.action === "DRAFT CREATED"
     || event.action === "COUNTER SENT"
     || event.action === "OWNER HANDOFF"
@@ -42,10 +43,12 @@ function discordEvents(trace) {
   ));
 }
 
-async function postDiscord(webhookUrl, payload, fetchImpl = fetch, wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))) {
-  const endpoint = `${webhookUrl.replace(/\/$/, "")}?wait=true`;
+async function postDiscord(webhookUrl, payload, fetchImpl = fetch, wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), threadId = null) {
+  const endpoint = new URL(webhookUrl.replace(/\/$/, ""));
+  endpoint.searchParams.set("wait", "true");
+  if (threadId) endpoint.searchParams.set("thread_id", threadId);
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const response = await fetchImpl(endpoint, {
+    const response = await fetchImpl(endpoint.toString(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -62,8 +65,12 @@ async function relayTrace(webhookUrl, trace, room, options = {}) {
   if (!validDiscordWebhook(webhookUrl)) throw new Error("DISCORD_WEBHOOK_URL is not a valid Discord webhook URL.");
   const events = discordEvents(trace);
   const receipts = [];
+  let threadId = options.threadId || null;
   for (const event of events) {
-    const message = await postDiscord(webhookUrl, discordPayload(event, room), options.fetchImpl, options.wait);
+    const payload = discordPayload(event, room);
+    if (!threadId && options.threadName) payload.thread_name = options.threadName;
+    const message = await postDiscord(webhookUrl, payload, options.fetchImpl, options.wait, threadId);
+    if (!threadId && options.threadName && /^\d+$/.test(String(message?.channel_id || ""))) threadId = String(message.channel_id);
     receipts.push({ event, message });
   }
   return receipts;

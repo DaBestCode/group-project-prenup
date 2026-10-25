@@ -53,7 +53,20 @@ function scheduleDiscord(env, context, trace, request, roomId) {
   const roomUrl = new URL("/room", request.url);
   roomUrl.searchParams.set("room", roomId);
   context.waitUntil((async () => {
-    const receipts = await relayTrace(env.DISCORD_WEBHOOK_URL, trace, { code: roomId, url: roomUrl.toString() });
+    const forumThreads = String(env.DISCORD_FORUM_THREADS || "").toLowerCase() === "true";
+    const room = await env.DB.prepare("SELECT title FROM rooms WHERE id = ?").bind(roomId).first();
+    const existingThread = forumThreads
+      ? await env.DB.prepare("SELECT channel_id FROM discord_messages WHERE room_id = ? ORDER BY id LIMIT 1").bind(roomId).first()
+      : null;
+    const receipts = await relayTrace(
+      env.DISCORD_WEBHOOK_URL,
+      trace,
+      { code: roomId, url: roomUrl.toString() },
+      {
+        threadId: existingThread?.channel_id || null,
+        threadName: forumThreads && !existingThread ? `${cleanText(room?.title, 70) || "Project room"} · ${roomId}` : null,
+      },
+    );
     const inserts = receipts.flatMap(({ event, message }) => {
       const messageId = String(message?.id || "");
       const channelId = String(message?.channel_id || "");
@@ -124,7 +137,7 @@ async function tokenHash(token) {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function createRoom(request, env) {
+async function createRoom(request, env, context) {
   const input = await body(request);
   const title = cleanText(input.title, 80);
   const expectedMembers = Math.max(2, Math.min(6, Number(input.expected_members) || 3));
@@ -139,6 +152,12 @@ async function createRoom(request, env) {
   await env.DB.prepare(
     "INSERT INTO rooms (id, title, expected_members) VALUES (?, ?, ?)",
   ).bind(code, title, expectedMembers).run();
+  scheduleDiscord(env, context, [{
+    round: 0,
+    actor: "Coordinator",
+    action: "ROOM OPENED",
+    outcome: `Waiting for ${expectedMembers} student agents to join and submit their bids.`,
+  }], request, code);
   const joinUrl = new URL("/room", request.url);
   joinUrl.searchParams.set("room", code);
   return json({ room_code: code, join_url: joinUrl.toString() }, 201);
@@ -520,7 +539,7 @@ async function api(request, env, context) {
   const path = url.pathname;
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   if (request.method === "GET" && path === "/api/health") return json({ ok: true, storage: "d1" });
-  if (request.method === "POST" && path === "/api/rooms") return createRoom(request, env);
+  if (request.method === "POST" && path === "/api/rooms") return createRoom(request, env, context);
 
   const match = path.match(/^\/api\/rooms\/([A-Z2-9]{6})(?:\/(join|confirm|inbox))?$/);
   if (!match) throw new HttpError(404, "API route not found.");

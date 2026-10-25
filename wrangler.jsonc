@@ -15,6 +15,9 @@
       "database_id": "bdeb5ea3-d757-4b11-a42a-f1ba7a329ee9"
     }
   ],
+  "vars": {
+    "DISCORD_FORUM_THREADS": "true"
+  },
   "observability": {
     "enabled": true
   }

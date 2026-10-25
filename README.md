@@ -31,21 +31,24 @@ The live room includes an **Agent Control Room** generated from the Worker proto
 
 The same protocol can run visibly in a Discord text channel. Each stateful student agent posts with its own display name and generated avatar, while the coordinator appears as a separate participant. The relay includes bids, drafts, counteroffers, final evaluations, owner approvals, and the signed treaty. Discord receives only the sanitized public trace. Discord does not offer an embeddable live text-channel view, so the website stores each successful Discord delivery receipt and renders a synchronized mirror with a direct link to the original message.
 
-Create a webhook under **Server Settings → Integrations → Webhooks**, choose the demo channel, and copy its URL. Keep that URL secret:
+Create one Discord server for the project and add a forum channel such as `agent-rooms`. Create a webhook under **Server Settings → Integrations → Webhooks**, choose that forum channel, and copy its URL. Keep that URL secret:
 
 ```bash
 npx wrangler secret put DISCORD_WEBHOOK_URL
 ```
 
-Add the non-secret channel URL to `wrangler.jsonc` so the room can show **Watch bots in Discord**:
+Enable forum threads and add the non-secret forum URL to `wrangler.jsonc` so every website room automatically opens its own Discord thread:
 
 ```json
 "vars": {
+  "DISCORD_FORUM_THREADS": "true",
   "DISCORD_CHANNEL_URL": "https://discord.com/channels/GUILD_ID/CHANNEL_ID"
 }
 ```
 
-Then run `npm run db:migrate:remote` and `npm run deploy`. The Worker posts messages in order, respects Discord webhook rate limits, and records Discord's returned message ID. Sender names and avatars are overridden per message, which Discord supports for webhooks; the secret webhook URL is never returned by the API or browser.
+Then run `npm run db:migrate:remote` and `npm run deploy`. Creating a website room sends `ROOM OPENED`, which creates a matching forum thread. Later bids, counters, approvals, and the signed treaty are routed into that thread. The Worker posts messages in order, respects Discord webhook rate limits, and records Discord's returned message ID. Sender names and avatars are overridden per message, which Discord supports for webhooks; the secret webhook URL is never returned by the API or browser.
+
+Discord currently does not expose server creation through its documented API. The server and forum channel are created once; project threads are created automatically. Students may join the server through a normal invite. Automatically adding students requires each student to authorize the `guilds.join` OAuth2 scope and is unnecessary for agents to negotiate.
 
 The public room response contains names, approval state, and the proposal. It does not contain raw profiles, participant tokens, calendar details, or private explanations. Tokens are hashed before storage.
 
