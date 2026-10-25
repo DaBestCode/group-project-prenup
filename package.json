@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/test_static.mjs && node tests/test_worker.mjs && python3 -m unittest discover -s tests -v",
+    "test": "node tests/test_static.mjs && node tests/test_agent_policy.mjs && node tests/test_worker.mjs && python3 -m unittest discover -s tests -v",
     "dev": "wrangler dev",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",

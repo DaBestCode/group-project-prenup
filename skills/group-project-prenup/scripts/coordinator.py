@@ -128,9 +128,11 @@ def owner_update(inbox: dict[str, Any]) -> dict[str, Any] | None:
         mine = [assignment for assignment in room["proposal"]["assignments"] if assignment["owner_id"] == participant_id]
         roles = ", ".join(assignment["role"] for assignment in mine)
         meeting = room["proposal"]["meeting"]["slot"] or "no common time yet"
+        tradeoff = room["proposal"].get("requires_owner_tradeoff", False)
+        decision = "I found an unresolved tradeoff that needs your judgment" if tradeoff else "I recommend approving this plan"
         return {
             "event": "owner_confirmation_needed",
-            "message": f"Your agent negotiated: {roles}. Group sync: {meeting}. Approve or renegotiate privately?",
+            "message": f"Your agent negotiated: {roles}. Group sync: {meeting}. {decision}. Approve or renegotiate privately?",
             "round": room["round"],
             "assignments": mine,
             "meeting": meeting,

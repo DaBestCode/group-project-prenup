@@ -20,7 +20,7 @@
       <section class="room-intro">
         <p class="eyebrow">THE ACTUAL PRENUP</p>
         <h1>Make the group plan before the group chat makes enemies.</h1>
-        <p>Start a room, send one code, and let each teammate's Cubbie agent bargain here—then text its own student for approval.</p>
+        <p>Start a room, send one code, and launch a personal agent for every teammate. The agents bargain here, then ask their owners for approval by web or Cubbie.</p>
       </section>
 
       <div class="room-alert hidden" id="room-alert" role="alert"></div>
@@ -69,8 +69,8 @@
           <label>Roles to avoid<input name="avoids" placeholder="presentation" /></label>
           <label>Times you can meet <small>one per line</small><textarea name="available" rows="3" placeholder="Thu 5:30 PM&#10;Sun 6:00 PM"></textarea></label>
           <label>Workload capacity <output id="capacity-output">3</output><input name="capacity" type="range" min="1" max="6" value="3" /></label>
-          <div class="share-preview"><strong>Your Cubbie agent will send:</strong><span>role signals · capacity · possible meeting times</span></div>
-          <button class="button button-primary" type="submit">Authorize my agent →</button>
+          <div class="share-preview"><strong>Your backend agent will use:</strong><span>role signals · capacity · possible meeting times</span></div>
+          <button class="button button-primary" type="submit">Launch my agent →</button>
         </form>
       </section>
 
@@ -84,7 +84,7 @@
           <article class="room-card privacy-room-card"><span>🔒</span><div><h3>Private stays private</h3><p>The room stores only the profile each student approved. Rejection reasons never appear here.</p></div></article>
         </div>
         <article class="room-card personal-agent-card hidden" id="personal-agent-card">
-          <div><span class="panel-kicker">YOUR CUBBIE AGENT</span><h3>Private agent inbox</h3><p>These authenticated messages belong only to your agent. Each teammate has a separate inbox and student.</p></div>
+          <div><span class="panel-kicker">YOUR PERSONAL AGENT</span><h3>Private agent inbox</h3><p>Your backend agent keeps bargaining even if Cubbie is offline. Cubbie and this web view are two ways for the agent to reach you.</p></div>
           <div class="agent-inbox" id="agent-inbox"></div>
         </article>
         <div class="hidden" id="proposal-area">

@@ -1,4 +1,5 @@
 import { negotiate } from "../static/negotiator.js";
+import { buildRoleBid, createAgentPolicy, evaluateProposal } from "./agent-policy.js";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CORS = {
@@ -89,7 +90,12 @@ async function createRoom(request, env) {
 
 async function participantsFor(roomId, env) {
   const result = await env.DB.prepare(
-    "SELECT id, name, profile_json, approval, joined_at FROM participants WHERE room_id = ? ORDER BY joined_at, id",
+    `SELECT participants.id, participants.name, participants.profile_json, participants.approval,
+      participants.joined_at, personal_agents.state AS agent_state
+      FROM participants
+      LEFT JOIN personal_agents ON personal_agents.room_id = participants.room_id
+        AND personal_agents.participant_id = participants.id
+      WHERE participants.room_id = ? ORDER BY participants.joined_at, participants.id`,
   ).bind(roomId).all();
   return result.results || [];
 }
@@ -113,26 +119,112 @@ async function roomView(roomId, env) {
     status: room.status,
     round: room.round,
     proposal: room.proposal_json ? JSON.parse(room.proposal_json) : null,
-    participants: participants.map(({ id, name, approval }) => ({ id, name, approval })),
+    participants: participants.map(({ id, name, approval, agent_state }) => ({ id, name, approval, agent_state })),
     spots_left: Math.max(0, room.expected_members - participants.length),
     created_at: room.created_at,
   };
 }
 
-async function buildProposal(roomId, env, round) {
-  const participants = await participantsFor(roomId, env);
-  const result = negotiate(participants.map((participant) => JSON.parse(participant.profile_json)));
-  delete result.students;
+async function runAgentNegotiation(roomId, env, startingRound) {
+  let round = startingRound;
+  let result;
+  let participants;
+  let evaluations;
+  let unresolvedTradeoff = false;
+  const agentTrace = [];
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    participants = await participantsFor(roomId, env);
+    const profiles = participants.map((participant) => JSON.parse(participant.profile_json));
+    result = negotiate(profiles);
+    delete result.students;
+    evaluations = profiles.map((profile) => ({ profile, evaluation: evaluateProposal(profile, result) }));
+
+    await env.DB.batch(evaluations.flatMap(({ profile, evaluation }) => [
+      env.DB.prepare(
+        "UPDATE personal_agents SET state = 'evaluating', last_evaluation_json = ?, updated_at = CURRENT_TIMESTAMP WHERE room_id = ? AND participant_id = ?",
+      ).bind(JSON.stringify(evaluation), roomId, profile.id),
+      agentMessage(env, roomId, profile.id, "personal_agent", "coordinator", "proposal_evaluation", {
+        round,
+        ...evaluation,
+        private_reason_shared: false,
+      }),
+    ]));
+
+    evaluations.forEach(({ profile, evaluation }) => {
+      agentTrace.push({ speaker: `${profile.name}'s agent`, message: `Round ${round}: ${evaluation.public_reason}` });
+    });
+
+    const counters = evaluations.filter(({ evaluation }) => evaluation.recommendation === "counter");
+    const tradeoffs = evaluations.filter(({ evaluation }) => evaluation.recommendation === "owner_tradeoff");
+    if (!counters.length) {
+      unresolvedTradeoff = tradeoffs.length > 0;
+      break;
+    }
+
+    let policyChanged = false;
+    const counterCommands = [];
+    counters.forEach(({ profile, evaluation }) => {
+      const newDeclines = evaluation.unavailable_roles.filter(
+        (roleId) => !(profile.declined_roles || []).includes(roleId),
+      );
+      if (newDeclines.length) {
+        policyChanged = true;
+        profile.declined_roles = [...new Set([...(profile.declined_roles || []), ...newDeclines])].sort();
+        counterCommands.push(
+          env.DB.prepare("UPDATE participants SET profile_json = ? WHERE room_id = ? AND id = ?")
+            .bind(JSON.stringify(profile), roomId, profile.id),
+          env.DB.prepare(
+            "UPDATE personal_agents SET policy_json = ?, updated_at = CURRENT_TIMESTAMP WHERE room_id = ? AND participant_id = ?",
+          ).bind(JSON.stringify(createAgentPolicy(profile)), roomId, profile.id),
+        );
+      }
+      counterCommands.push(
+        env.DB.prepare(
+          "UPDATE personal_agents SET state = 'countering', updated_at = CURRENT_TIMESTAMP WHERE room_id = ? AND participant_id = ?",
+        ).bind(roomId, profile.id),
+        agentMessage(env, roomId, profile.id, "personal_agent", "coordinator", "counter_offer", {
+          round,
+          unavailable_roles: evaluation.unavailable_roles,
+          max_effort: evaluation.capacity,
+          private_reason_shared: false,
+        }),
+      );
+    });
+    await env.DB.batch(counterCommands);
+    if (!policyChanged || attempt === 3) {
+      unresolvedTradeoff = true;
+      break;
+    }
+    round += 1;
+  }
+
+  result.agent_evaluations = evaluations.map(({ profile, evaluation }) => ({
+    participant_id: profile.id,
+    agent: `${profile.name}'s agent`,
+    recommendation: evaluation.recommendation,
+    public_reason: evaluation.public_reason,
+  }));
+  result.requires_owner_tradeoff = unresolvedTradeoff;
+  result.log.push(...agentTrace);
+  result.log.push({
+    speaker: "Coordinator",
+    message: unresolvedTradeoff
+      ? "The agents reached a tradeoff they cannot authorize. Each owner must decide."
+      : "Every personal agent recommends this draft. Asking owners for final consent.",
+  });
+
   const proposalMessages = participants.map((participant) => {
     const assignments = result.assignments
       .filter((assignment) => assignment.owner_id === participant.id)
       .map(({ role_id, role, effort, reason }) => ({ role_id, role, effort, reason }));
-    return agentMessage(env, roomId, participant.id, "coordinator", "personal_agent", "proposal_ready", {
+    return agentMessage(env, roomId, participant.id, "coordinator", "personal_agent", "owner_confirmation_needed", {
       round,
       assignments,
       meeting: result.meeting.slot,
       fairness_score: result.fairness_score,
-      needs_owner_confirmation: true,
+      recommendation: evaluations.find(({ profile }) => profile.id === participant.id)?.evaluation.recommendation,
+      tradeoff: unresolvedTradeoff,
     });
   });
   await env.DB.batch([
@@ -140,6 +232,9 @@ async function buildProposal(roomId, env, round) {
       "UPDATE rooms SET status = 'awaiting_confirmation', round = ?, proposal_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
     ).bind(round, JSON.stringify(result), roomId),
     env.DB.prepare("UPDATE participants SET approval = 'pending' WHERE room_id = ?").bind(roomId),
+    env.DB.prepare(
+      "UPDATE personal_agents SET state = 'awaiting_owner', updated_at = CURRENT_TIMESTAMP WHERE room_id = ?",
+    ).bind(roomId),
     ...proposalMessages,
   ]);
 }
@@ -163,6 +258,13 @@ async function joinRoom(request, env, roomId) {
     env.DB.prepare(
       "INSERT INTO participants (room_id, id, token_hash, name, profile_json) VALUES (?, ?, ?, ?, ?)",
     ).bind(roomId, participantId, hash, profile.name, JSON.stringify(profile)),
+    env.DB.prepare(
+      "INSERT INTO personal_agents (room_id, participant_id, state, policy_json) VALUES (?, ?, 'online', ?)",
+    ).bind(roomId, participantId, JSON.stringify(createAgentPolicy(profile))),
+    agentMessage(env, roomId, participantId, "personal_agent", "coordinator", "agent_online", {
+      capabilities: ["bid", "evaluate", "counter", "escalate_to_owner"],
+      owner_channel: "web_or_cubbie",
+    }),
     agentMessage(env, roomId, participantId, "personal_agent", "coordinator", "constraints_offer", {
       strengths: profile.strengths,
       prefers: profile.prefers,
@@ -171,9 +273,13 @@ async function joinRoom(request, env, roomId) {
       capacity: profile.capacity,
       private_fields_shared: false,
     }),
+    agentMessage(env, roomId, participantId, "personal_agent", "coordinator", "role_bid", {
+      bids: buildRoleBid(profile),
+      max_effort: profile.capacity,
+    }),
   ]);
 
-  if (existing.length + 1 === room.expected_members) await buildProposal(roomId, env, 1);
+  if (existing.length + 1 === room.expected_members) await runAgentNegotiation(roomId, env, 1);
   return json({ participant_id: participantId, participant_token: token, room: await roomView(roomId, env) }, 201);
 }
 
@@ -219,6 +325,9 @@ async function confirmRoom(request, env, roomId) {
   if (input.approved === true) {
     await env.DB.batch([
       env.DB.prepare("UPDATE participants SET approval = 'approved' WHERE room_id = ? AND id = ?").bind(roomId, participant.id),
+      env.DB.prepare(
+        "UPDATE personal_agents SET state = 'owner_approved', updated_at = CURRENT_TIMESTAMP WHERE room_id = ? AND participant_id = ?",
+      ).bind(roomId, participant.id),
       agentMessage(env, roomId, participant.id, "personal_agent", "coordinator", "owner_approved", {
         round: room.round,
         consent: "explicit",
@@ -231,6 +340,9 @@ async function confirmRoom(request, env, roomId) {
       const participants = await participantsFor(roomId, env);
       await env.DB.batch([
         env.DB.prepare("UPDATE rooms SET status = 'signed', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(roomId),
+        env.DB.prepare(
+          "UPDATE personal_agents SET state = 'signed', updated_at = CURRENT_TIMESTAMP WHERE room_id = ?",
+        ).bind(roomId),
         ...participants.map((person) => agentMessage(env, roomId, person.id, "coordinator", "personal_agent", "treaty_signed", {
           round: room.round,
           unanimous: true,
@@ -248,13 +360,16 @@ async function confirmRoom(request, env, roomId) {
   await env.DB.batch([
     env.DB.prepare("UPDATE participants SET profile_json = ? WHERE room_id = ? AND id = ?")
       .bind(JSON.stringify(profile), roomId, participant.id),
+    env.DB.prepare(
+      "UPDATE personal_agents SET state = 'countering', policy_json = ?, updated_at = CURRENT_TIMESTAMP WHERE room_id = ? AND participant_id = ?",
+    ).bind(JSON.stringify(createAgentPolicy(profile)), roomId, participant.id),
     agentMessage(env, roomId, participant.id, "personal_agent", "coordinator", "owner_rejected", {
       round: room.round,
       unavailable_roles: assignedRoles,
       private_reason_shared: false,
     }),
   ]);
-  await buildProposal(roomId, env, Number(room.round) + 1);
+  await runAgentNegotiation(roomId, env, Number(room.round) + 1);
   const updated = await env.DB.prepare("SELECT proposal_json FROM rooms WHERE id = ?").bind(roomId).first();
   const revised = JSON.parse(updated.proposal_json);
   revised.log.unshift({

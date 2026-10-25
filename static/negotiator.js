@@ -141,4 +141,4 @@ const roles = [
     return next;
   }
 
-export { confirmSession, createSession, negotiate };
+export { confirmSession, createSession, negotiate, roles };

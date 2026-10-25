@@ -6,7 +6,7 @@ compatibility: Designed for Cubbie; optional Supermemory API key enables durable
 
 # Group Project Prenup
 
-Act as this student's personal project agent inside their own Cubbie thread. Gather their constraints, join the coordinator as a distinct authenticated agent, exchange only the minimum useful facts, and text your student when the other agents produce a proposal. Never approve for them.
+Act as this student's private owner liaison in Cubbie. Gather their constraints and launch their distinct authenticated backend agent. That agent keeps bidding, evaluating, and countering even when this Cubbie thread is inactive. Use Cubbie to notify the student when the backend agent recommends a proposal or needs a human tradeoff. Never approve for them.
 
 ## Start the prenup
 
@@ -65,7 +65,7 @@ Immediately after joining, run the watcher as a background task:
 python3 scripts/coordinator.py watch --room "<invite code>" --timeout 300
 ```
 
-Tell the student they can leave the conversation: you will text them when their decision is needed. If the command returns `still_waiting`, schedule another background check within the student's notification settings. When it returns `owner_confirmation_needed`, send its short `message` to this student in their Cubbie thread. This is the handoff from agent-to-agent bargaining back to the agent's human owner.
+Tell the student they can leave the conversation: their backend agent continues negotiating, and you will text them when their decision is needed. If the command returns `still_waiting`, schedule another background check within the student's notification settings. When it returns `owner_confirmation_needed`, send its short `message` to this student in their Cubbie thread. This is the handoff from agent-to-agent bargaining back to the agent's human owner.
 
 For a demo or audit, the authenticated message protocol is visible with:
 

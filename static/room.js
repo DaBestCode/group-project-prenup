@@ -86,7 +86,7 @@ function renderRoom() {
     ? `${room.spots_left} ${room.spots_left === 1 ? "agent" : "agents"} still need to join`
     : "Every agent is here";
   $("#member-list").innerHTML = room.participants.map((participant) => `
-    <div class="member-row"><span>${escapeHtml(participant.name)}${mine?.participant_id === participant.id ? " (you)" : ""}</span><b>${participant.approval === "approved" ? "✓ approved" : room.proposal ? "reviewing" : "joined"}</b></div>
+    <div class="member-row"><span>${escapeHtml(participant.name)}${mine?.participant_id === participant.id ? " (you)" : ""}</span><b>${escapeHtml(agentStateLabel(participant))}</b></div>
   `).join("") + Array.from({ length: room.spots_left }, () => '<div class="member-row empty-member"><span>Invite pending</span><b>···</b></div>').join("");
   renderAgentInbox(mine);
 
@@ -98,18 +98,37 @@ function renderRoom() {
   $("#shared-round").textContent = room.round;
   $("#shared-fairness").textContent = room.proposal.fairness_score;
   $("#shared-meeting").textContent = room.proposal.meeting.slot || "Needs a human choice";
-  $("#shared-status").textContent = room.status === "signed" ? "Treaty signed" : "Awaiting confirmation";
+  $("#shared-status").textContent = room.status === "signed"
+    ? "Treaty signed"
+    : room.proposal.requires_owner_tradeoff ? "Owner tradeoff needed" : "Agents recommend approval";
   $("#shared-status").classList.toggle("signed", room.status === "signed");
   $("#shared-log").innerHTML = room.proposal.log.map((entry) => `<div class="message"><strong>${escapeHtml(entry.speaker)}</strong><span>${escapeHtml(entry.message)}</span></div>`).join("");
   $("#shared-assignments").innerHTML = room.proposal.assignments.map((assignment) => `<div class="assignment"><div><h4>${escapeHtml(assignment.role)}</h4><p>${assignment.effort} effort ${assignment.effort === 1 ? "point" : "points"} · ${escapeHtml(assignment.reason)}</p></div><span class="owner">${escapeHtml(assignment.owner)}</span></div>`).join("");
   renderActions(mine);
 }
 
+function agentStateLabel(participant) {
+  if (participant.approval === "approved") return "✓ owner approved";
+  const labels = {
+    online: "agent online",
+    evaluating: "agent evaluating",
+    countering: "agent countering",
+    awaiting_owner: "waiting for owner",
+    owner_approved: "✓ owner approved",
+    signed: "✓ signed",
+  };
+  return labels[participant.agent_state] || "agent joining";
+}
+
 function agentMessageText(entry) {
+  if (entry.kind === "agent_online") return "Your personal agent came online with permission to bid, evaluate, counter, and escalate.";
   if (entry.kind === "constraints_offer") return "Sent the approved constraint envelope to the coordinator.";
-  if (entry.kind === "proposal_ready") {
+  if (entry.kind === "role_bid") return `Submitted scored bids for ${entry.message.bids.length} roles without sharing private notes.`;
+  if (entry.kind === "proposal_evaluation") return entry.message.public_reason;
+  if (entry.kind === "counter_offer") return "Countered automatically with only the role or workload limit the coordinator needs.";
+  if (entry.kind === "owner_confirmation_needed" || entry.kind === "proposal_ready") {
     const roles = entry.message.assignments.map((assignment) => assignment.role).join(" + ");
-    return `Received round ${entry.message.round}: ${roles || "no role yet"}. Human confirmation required.`;
+    return `Received round ${entry.message.round}: ${roles || "no role yet"}. ${entry.message.tradeoff ? "Your judgment is needed for a tradeoff." : "Your agent recommends approval; final consent is yours."}`;
   }
   if (entry.kind === "owner_approved") return `Told the coordinator you approved round ${entry.message.round}.`;
   if (entry.kind === "owner_rejected") return `Asked for a new round. Your private reason stayed private.`;
@@ -151,7 +170,9 @@ function renderActions(mine) {
     return;
   }
   $("#shared-consent-title").textContent = "Approve your assignment?";
-  $("#shared-consent-copy").textContent = "A private no starts a fresh round without explaining why.";
+  $("#shared-consent-copy").textContent = room.proposal.requires_owner_tradeoff
+    ? "The agents could not resolve every constraint. Review the flagged tradeoff before deciding."
+    : "Your agent recommends this plan. A private no starts a fresh bargaining round.";
   actions.innerHTML = '<button class="button button-ghost" id="reject-shared">Reject privately</button><button class="button button-primary" id="approve-shared">Approve treaty →</button>';
   $("#reject-shared").addEventListener("click", () => confirm(false));
   $("#approve-shared").addEventListener("click", () => confirm(true));
