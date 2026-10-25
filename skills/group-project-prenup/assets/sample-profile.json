@@ -1,0 +1,11 @@
+{
+  "id": "maya",
+  "name": "Maya",
+  "strengths": ["research", "writing"],
+  "prefers": ["research"],
+  "avoids": ["presentation"],
+  "capacity": 3,
+  "available": ["Thu 5:30 PM", "Sun 6:00 PM"],
+  "private_note": "Job interview Tuesday; do not share why Tuesday is blocked.",
+  "private_calendar": ["CHM 113 lab", "work shift", "interview prep"]
+}

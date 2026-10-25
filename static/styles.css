@@ -150,12 +150,22 @@ blockquote { margin: 20px 0; font-size: 28px; line-height: 1.25; font-weight: 80
 .steps span { font: 500 12px "DM Mono", monospace; color: var(--orange); }
 .steps h3 { margin: 64px 0 10px; font-size: 22px; letter-spacing: -.03em; }
 .steps p { margin: 0; color: #575a53; line-height: 1.55; font-size: 13px; }
+.sponsor-stack { padding: 90px 7vw 110px; background: #f7f3ea; }
+.sponsor-stack .section-heading > p { color: #676a63; }
+.sponsor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.sponsor-card { display: flex; gap: 20px; min-height: 190px; padding: 28px; border: 1px solid var(--ink); box-shadow: var(--shadow); }
+.cubbie-card { background: #dcecff; }
+.memory-card { background: #e8ddff; }
+.sponsor-number { font: 500 11px "DM Mono", monospace; opacity: .55; }
+.sponsor-card h3 { margin: 0 0 10px; font-size: 27px; }
+.sponsor-card p { margin: 0; line-height: 1.65; }
+.data-boundary { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 24px; padding: 17px 20px; border: 1px dashed var(--ink); font: 500 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .04em; }
 footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px 7vw; color: white; background: var(--ink); font: 400 10px "DM Mono", monospace; }
 
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; padding-top: 65px; }
   .hero-card { margin-top: 30px; }
-  .agent-grid, .steps { grid-template-columns: 1fr; }
+  .agent-grid, .steps, .sponsor-grid { grid-template-columns: 1fr; }
   .section-heading, .demo-grid, .consent-panel { display: grid; grid-template-columns: 1fr; }
   .section-heading { align-items: start; }
   .steps article { min-height: 210px; }
@@ -165,7 +175,7 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 @media (max-width: 560px) {
   .topbar { padding: 0 20px; }
   .track-badge { display: none; }
-  .hero, .agents-section, .workspace, .how-it-works { padding-left: 20px; padding-right: 20px; }
+  .hero, .agents-section, .workspace, .how-it-works, .sponsor-stack { padding-left: 20px; padding-right: 20px; }
   h1 { font-size: 52px; }
   .hero-card { padding: 34px 25px 28px; }
   .workspace-header { align-items: start; gap: 16px; }
@@ -173,5 +183,6 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .approval-row > div:first-child { grid-column: 1 / -1; }
   .meeting-row { grid-template-columns: auto 1fr; }
   .meeting-row small { grid-column: 1 / -1; }
+  .data-boundary { align-items: stretch; flex-direction: column; }
   footer { flex-direction: column; }
 }
