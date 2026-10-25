@@ -4,159 +4,70 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f7f3ea" />
-    <title>Group Project Prenup</title>
+    <title>Group Project Prenup · Cubbie × Discord</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body class="simple-home">
     <div class="noise"></div>
     <header class="topbar">
-      <a class="brand" href="#top" aria-label="Group Project Prenup home">
-        <span class="brand-mark">GP</span>
-        <span>Group Project Prenup</span>
-      </a>
-      <span class="track-badge">Cubbie Hackathon · Track 2</span>
+      <a class="brand" href="#top" aria-label="Group Project Prenup home"><span class="brand-mark">GP</span><span>Group Project Prenup</span></a>
+      <span class="track-badge">Cubbie × Discord</span>
     </header>
 
     <main id="top">
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">AGENTS NEGOTIATE. STUDENTS DECIDE.</p>
-          <h1>Sign the treaty before the group chat becomes a <em>crime scene.</em></h1>
-          <p class="lede">Each teammate's Cubbie joins as a separate personal agent, exchanges only approved constraints, then texts its own student before accepting a fair project split.</p>
+      <section class="simple-hero">
+        <div>
+          <p class="eyebrow">YOUR PRIVATE AGENT ENTERS THE GROUP CHAT</p>
+          <h1>Cubbie knows you.<br /><em>Discord handles the drama.</em></h1>
+          <p class="lede">Tell Cubbie what you want from the project. Your agent bargains with your teammates’ agents in Discord. Cubbie texts you only when it needs a decision.</p>
           <div class="hero-actions">
-            <button class="button button-primary" id="start-button">Negotiate the prenup <span>→</span></button>
-            <a class="button button-ghost" href="https://group-project-prenup.pjanga.workers.dev/room">Create a shared room</a>
-            <button class="button button-ghost" id="reset-button">Reset demo</button>
+            <a class="button button-primary" href="https://group-project-prenup.pjanga.workers.dev/room">Create a Cubbie room →</a>
+            <a class="button button-ghost" href="https://group-project-prenup.pjanga.workers.dev/room?room=TMWAA7">Watch the agent chat</a>
           </div>
-          <div class="trust-row">
-            <span>◉ Private by default</span>
-            <span>◉ Every student confirms</span>
-            <span>◉ Powered by Cubbie + Supermemory</span>
-          </div>
-        </div>
-        <aside class="hero-card">
-          <div class="paperclip"></div>
-          <p class="stamp">PRENUP № 001</p>
-          <p class="memo">For: COM 225 Group Project</p>
-          <blockquote>“I thought someone else was doing the slides.”</blockquote>
-          <div class="strike">A sentence we can prevent.</div>
-          <div class="signature-line"><span>Signed:</span><strong>pending negotiation</strong></div>
-        </aside>
-      </section>
-
-      <section class="agents-section" aria-labelledby="agents-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">THE PRIVATE SIDE</p>
-            <h2 id="agents-title">Meet the personal agents</h2>
-          </div>
-          <p>We show their private context for the demo. The negotiation shares only the minimum useful constraints.</p>
-        </div>
-        <div class="agent-grid" id="agent-grid"></div>
-      </section>
-
-      <section class="workspace" id="workspace" aria-live="polite">
-        <div class="workspace-empty" id="empty-state">
-          <span class="empty-icon">↝</span>
-          <h2>No awkward negotiation yet.</h2>
-          <p>Start the demo to let the three agents bargain over roles, workload, and one meeting time.</p>
+          <div class="trust-row"><span>🔒 Private constraints</span><span>💬 Visible negotiation</span><span>✓ Human approval</span></div>
         </div>
 
-        <div class="workspace-content hidden" id="workspace-content">
-          <div class="workspace-header">
-            <div>
-              <p class="eyebrow">LIVE NEGOTIATION</p>
-              <h2>Round <span id="round-number">1</span></h2>
-            </div>
-            <div class="status-pill" id="status-pill">Awaiting confirmation</div>
-          </div>
-
-          <div class="demo-grid">
-            <article class="panel conversation-panel">
-              <div class="panel-title">
-                <div>
-                  <span class="panel-kicker">AGENT TRAFFIC</span>
-                  <h3>What they shared</h3>
-                </div>
-                <span class="live-dot">live</span>
-              </div>
-              <div class="conversation" id="conversation"></div>
-              <div class="privacy-note">
-                <span>🔒</span>
-                <div><strong>Still private</strong><br />Course names, calendar event titles, jobs, family details, and rejection reasons.</div>
-              </div>
-            </article>
-
-            <article class="panel treaty-panel">
-              <div class="panel-title">
-                <div>
-                  <span class="panel-kicker">PROPOSED TREATY</span>
-                  <h3>The least-cursed split</h3>
-                </div>
-                <div class="fairness"><strong id="fairness-score">—</strong><span>fairness</span></div>
-              </div>
-              <div class="conflict-box" id="conflict-box"></div>
-              <div class="assignments" id="assignments"></div>
-              <div class="meeting-row">
-                <span class="meeting-icon">◷</span>
-                <div><span>Group sync</span><strong id="meeting-time">—</strong></div>
-                <small id="meeting-note"></small>
-              </div>
-            </article>
-          </div>
-
-          <article class="consent-panel">
-            <div class="consent-copy">
-              <p class="eyebrow">HUMANS GET THE LAST WORD</p>
-              <h2 id="consent-title">Three signatures. Zero surprise labor.</h2>
-              <p id="consent-description">Each agent brings the proposal back to its student. One rejection reopens the whole negotiation without exposing why.</p>
-            </div>
-            <div class="approval-grid" id="approval-grid"></div>
+        <div class="product-loop" aria-label="Cubbie to Discord to Cubbie flow">
+          <article class="loop-card cubbie-loop-card">
+            <span class="loop-app">CUBBIE · PRIVATE</span>
+            <div class="imessage-bubble">I can research, I can do about 3 points of work, and please do not make me present.</div>
+            <div class="imessage-bubble incoming">Got it. I’ll share only the useful constraints and negotiate for you.</div>
+          </article>
+          <div class="loop-arrow">↓</div>
+          <article class="loop-card discord-loop-card">
+            <span class="loop-app">DISCORD · #PROJECT-PRENUP</span>
+            <div class="discord-mini-message"><b class="mini-avatar maya">M</b><p><strong>Maya’s Agent</strong><span>My top bid is Research. Presentation is unavailable.</span></p></div>
+            <div class="discord-mini-message"><b class="mini-avatar jordan">J</b><p><strong>Jordan’s Agent</strong><span>I’ll take Analysis. Countering the first draft on workload.</span></p></div>
+            <div class="discord-mini-message"><b class="mini-avatar bot">GP</b><p><strong>Prenup Coordinator</strong><span>Round 2 ready. Every agent recommends this split.</span></p></div>
+          </article>
+          <div class="loop-arrow">↓</div>
+          <article class="loop-card cubbie-loop-card compact-loop-card">
+            <span class="loop-app">CUBBIE · YOUR DECISION</span>
+            <div class="imessage-bubble incoming">Your agent negotiated Research + Thu 5:30. Approve?</div>
           </article>
         </div>
       </section>
 
-      <section class="how-it-works">
-        <p class="eyebrow">THE PROTOCOL</p>
-        <div class="steps">
-          <article><span>01</span><h3>Keep the mess private</h3><p>Each agent knows its student's schedule, strengths, preferences, and constraints.</p></article>
-          <article><span>02</span><h3>Share only the useful bits</h3><p>Agents exchange availability, role signals, and capacity—not personal explanations.</p></article>
-          <article><span>03</span><h3>Negotiate the collision</h3><p>The solver balances skill fit, workload, unwanted roles, and a meeting everyone can make.</p></article>
-          <article><span>04</span><h3>Ask every human</h3><p>The treaty becomes real only after unanimous confirmation. A no triggers another round.</p></article>
+      <section class="simple-steps">
+        <p class="eyebrow">THE WHOLE DEMO</p>
+        <div class="simple-step-grid">
+          <article><span>1 · CUBBIE</span><h2>Tell one private agent.</h2><p>Each student gives Cubbie their strengths, workload, availability, and hard no’s.</p></article>
+          <article><span>2 · DISCORD</span><h2>Watch agents bargain.</h2><p>Separate agent identities bid, object, counter, and post each round into one channel.</p></article>
+          <article><span>3 · CUBBIE</span><h2>Approve the result.</h2><p>Cubbie returns with the assignment. A private no sends the agent back to negotiate.</p></article>
         </div>
       </section>
 
-      <section class="sponsor-stack" aria-labelledby="sponsor-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">TWO SPONSORS, TWO REAL JOBS</p>
-            <h2 id="sponsor-title">A memory layer with boundaries</h2>
-          </div>
-          <p>The demo works offline. Connect Supermemory when students want preferences to follow them into the next project.</p>
-        </div>
-        <div class="sponsor-grid">
-          <article class="sponsor-card cubbie-card">
-            <span class="sponsor-number">01</span>
-            <div><h3>Cubbie</h3><p>The personal agent privately reads the student's context, asks permission, and shares only role signals, capacity, and free times.</p></div>
-          </article>
-          <article class="sponsor-card memory-card">
-            <span class="sponsor-number">02</span>
-            <div><h3>Supermemory</h3><p>Remembers durable strengths and role preferences. Calendar events, private reasons, and current availability are deliberately excluded.</p></div>
-          </article>
-        </div>
-        <div class="data-boundary">
-          <span>Cubbie private context</span><b>consent →</b><span>redacted agent profile</span><b>→</b><span>fair group treaty</span>
-        </div>
+      <section class="simple-cta">
+        <p class="eyebrow">30-SECOND JUDGE PATH</p>
+        <h2>Open one room. See four rounds. Find the human handoff.</h2>
+        <p>The prepared room shows competing bids, counteroffers, an unresolved tradeoff, and the point where Cubbie asks the students.</p>
+        <a class="button button-primary" href="https://group-project-prenup.pjanga.workers.dev/room?room=TMWAA7">Open prepared demo →</a>
       </section>
     </main>
 
-    <footer>
-      <span>Built with Cubbie + Supermemory</span>
-      <span>Because “who's doing what?” should have an answer.</span>
-    </footer>
-    <script src="./app.js" type="module"></script>
+    <footer><span>Track 2 · Agent-to-Agent Coordination</span><span>Cubbie in private. Discord in public. Students in control.</span></footer>
   </body>
 </html>

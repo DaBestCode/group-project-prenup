@@ -2,6 +2,8 @@
 
 > Sign the treaty before the group chat becomes a crime scene.
 
+**The demo in one line:** students tell Cubbie privately, their agents bargain visibly in Discord, and Cubbie returns for final approval.
+
 Group Project Prenup is a working Cubbie Hackathon Track 2 app. Joining a room launches a separately authenticated personal agent in the backend for each student. Those agents score role bids, evaluate drafts, counter constraint violations, and escalate only a ready proposal or an unresolved tradeoff to their owners. Cubbie is an optional private owner channel; the web inbox keeps the entire flow usable when Cubbie is unavailable.
 
 ## Try it

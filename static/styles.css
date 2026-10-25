@@ -177,6 +177,37 @@ blockquote { margin: 20px 0; font-size: 28px; line-height: 1.25; font-weight: 80
 .data-boundary { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 24px; padding: 17px 20px; border: 1px dashed var(--ink); font: 500 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .04em; }
 footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px 7vw; color: white; background: var(--ink); font: 400 10px "DM Mono", monospace; }
 
+.simple-home .button { display: inline-block; text-decoration: none; }
+.simple-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(380px, .95fr); gap: 7vw; align-items: center; min-height: 760px; padding: 76px 7vw 90px; }
+.simple-hero h1 { font-size: clamp(54px, 6.6vw, 96px); }
+.product-loop { max-width: 520px; justify-self: center; width: 100%; }
+.loop-card { padding: 22px; border: 1px solid var(--ink); box-shadow: 8px 8px 0 rgba(29,32,28,.13); }
+.loop-app { display: block; margin-bottom: 16px; font: 500 10px "DM Mono", monospace; letter-spacing: .1em; }
+.cubbie-loop-card { background: #dcecff; }
+.discord-loop-card { color: white; background: #313338; }
+.compact-loop-card { padding-bottom: 24px; }
+.loop-arrow { height: 32px; display: grid; place-items: center; font: 700 20px "DM Mono", monospace; }
+.imessage-bubble { width: 78%; margin: 8px 0 8px auto; padding: 11px 14px; color: white; background: #1677ff; border-radius: 18px 18px 4px 18px; font-size: 13px; line-height: 1.45; }
+.imessage-bubble.incoming { margin-left: 0; margin-right: auto; color: var(--ink); background: white; border-radius: 18px 18px 18px 4px; }
+.discord-mini-message { display: grid; grid-template-columns: 38px 1fr; gap: 11px; margin-top: 14px; }
+.mini-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; font: 700 11px "DM Mono", monospace; }
+.mini-avatar.maya { color: var(--ink); background: var(--pink); }
+.mini-avatar.jordan { color: var(--ink); background: var(--acid); }
+.mini-avatar.bot { background: var(--blue); }
+.discord-mini-message p { display: grid; gap: 3px; margin: 0; }
+.discord-mini-message strong { color: white; font-size: 13px; }
+.discord-mini-message span { color: #c5c7ce; font-size: 12px; line-height: 1.45; }
+.simple-steps { padding: 82px 7vw 95px; color: white; background: var(--ink); }
+.simple-steps .eyebrow { color: var(--acid); }
+.simple-step-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,.35); border-left: 1px solid rgba(255,255,255,.35); }
+.simple-step-grid article { min-height: 270px; padding: 25px; border-right: 1px solid rgba(255,255,255,.35); border-bottom: 1px solid rgba(255,255,255,.35); }
+.simple-step-grid span { color: var(--acid); font: 500 10px "DM Mono", monospace; }
+.simple-step-grid h2 { margin: 70px 0 12px; font-size: 28px; letter-spacing: -.04em; }
+.simple-step-grid p { margin: 0; color: #bfc2bb; line-height: 1.6; font-size: 13px; }
+.simple-cta { padding: 95px 7vw 110px; background: var(--acid); }
+.simple-cta h2 { max-width: 900px; margin: 0 0 18px; font-size: clamp(40px, 5vw, 72px); line-height: 1; letter-spacing: -.05em; }
+.simple-cta > p:not(.eyebrow) { max-width: 680px; margin: 0 0 28px; font-size: 17px; line-height: 1.6; }
+
 .room-page { min-height: 100vh; background: #f7f3ea; }
 .room-shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 70px 0 110px; }
 .room-intro { max-width: 820px; margin-bottom: 46px; }
@@ -200,6 +231,7 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 .cubbie-launch-card p { color: #555e59; line-height: 1.55; }
 .cubbie-launch-card label { align-content: start; }
 .cubbie-launch-card textarea { min-height: 230px; font: 400 12px/1.5 "DM Mono", monospace; text-transform: none; }
+.prepared-message summary { margin-bottom: 14px; cursor: pointer; font-weight: 800; }
 .cubbie-launch-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 .cubbie-launch-actions a { text-decoration: none; }
 .cubbie-launch-help { margin: 14px 0 0; font-size: 12px; }
@@ -216,7 +248,9 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 .privacy-room-card { display: flex; align-items: center; gap: 18px; background: #e8ddff; }
 .privacy-room-card > span { font-size: 34px; }
 .privacy-room-card p { color: #5e625a; line-height: 1.55; }
-.personal-agent-card { display: grid; grid-template-columns: .7fr 1.3fr; gap: 30px; margin-top: 20px; background: #dcecff; }
+.personal-agent-card { margin-top: 20px; background: #dcecff; }
+.personal-agent-card summary { cursor: pointer; font-weight: 800; }
+.personal-agent-card[open] summary { margin-bottom: 18px; }
 .personal-agent-card p { color: #59615d; line-height: 1.5; }
 .agent-inbox { display: grid; gap: 8px; }
 .agent-message { padding: 12px 14px; border: 1px solid rgba(29,32,28,.3); background: rgba(255,255,255,.75); }
@@ -227,6 +261,23 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 .member-row b { color: var(--green); font: 500 10px "DM Mono", monospace; text-transform: uppercase; }
 .empty-member { color: #8b8d87; background: transparent; border-style: dashed; }
 #proposal-area { margin-top: 65px; }
+.round-caption { margin: 8px 0 0; text-align: right; color: #73776f; font: 500 10px "DM Mono", monospace; text-transform: uppercase; }
+.discord-chat-panel { color: white; background: #313338; }
+.discord-chat-panel .panel-title { border-color: rgba(255,255,255,.14); }
+.discord-chat-panel .panel-kicker { color: #b5bac1; }
+.discord-chat { max-height: 540px; overflow: auto; padding: 10px 0; }
+.discord-chat-message { display: grid; grid-template-columns: 42px 1fr; gap: 12px; padding: 12px 20px; }
+.discord-chat-message:hover { background: #2e3035; }
+.discord-avatar { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #1d201c; background: var(--pink); font: 700 12px "DM Mono", monospace; }
+.coordinator-avatar { color: white; background: var(--blue); }
+.discord-message-head { display: flex; align-items: baseline; gap: 8px; }
+.discord-message-head strong { font-size: 13px; }
+.discord-message-head span { color: #949ba4; font: 400 9px "DM Mono", monospace; }
+.discord-chat-message b { display: block; margin-top: 3px; color: var(--acid); font: 500 9px "DM Mono", monospace; }
+.discord-chat-message p { margin: 3px 0 0; color: #dbdee1; font-size: 12px; line-height: 1.45; }
+.technical-proof { margin-top: 20px; color: white; background: #151713; border: 1px solid var(--ink); }
+.technical-proof summary { padding: 16px 20px; cursor: pointer; color: var(--acid); font: 500 10px "DM Mono", monospace; text-transform: uppercase; }
+.technical-proof .protocol-trace { border-top: 1px solid rgba(255,255,255,.16); }
 .shared-consent { margin-top: 22px; }
 .shared-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
 .signed-seal { padding: 18px; border: 2px solid var(--ink); background: rgba(255,255,255,.6); font: 600 13px "DM Mono", monospace; transform: rotate(-1deg); }
@@ -238,6 +289,9 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .room-start, .lobby-grid { grid-template-columns: 1fr; }
   .cubbie-launch-card { grid-template-columns: 1fr; }
   .personal-agent-card { grid-template-columns: 1fr; }
+  .simple-hero { grid-template-columns: 1fr; }
+  .product-loop { margin-top: 30px; }
+  .simple-step-grid { grid-template-columns: 1fr; }
   .trace-event { grid-template-columns: 32px 150px 1fr; }
   .trace-round { display: none; }
   .section-heading, .demo-grid, .consent-panel { display: grid; grid-template-columns: 1fr; }
@@ -263,6 +317,7 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .profile-form { grid-template-columns: 1fr; }
   .profile-form label, .profile-form label:nth-child(5), .profile-form .share-preview, .profile-form button { grid-column: 1; }
   .room-card-heading, .shared-room-header, .share-preview, .shared-actions { align-items: stretch; flex-direction: column; }
+  .simple-hero, .simple-steps, .simple-cta { padding-left: 20px; padding-right: 20px; }
   .trace-event { grid-template-columns: 30px 1fr; }
   .trace-event p { grid-column: 2; }
   .control-room-panel .panel-title, .relay-badges { align-items: flex-start; flex-direction: column; }

@@ -102,17 +102,29 @@ function renderRoom() {
     ? "Treaty signed"
     : room.proposal.requires_owner_tradeoff ? "Owner tradeoff needed" : "Agents recommend approval";
   $("#shared-status").classList.toggle("signed", room.status === "signed");
-  $("#shared-log").innerHTML = room.proposal.log.map((entry) => `<div class="message"><strong>${escapeHtml(entry.speaker)}</strong><span>${escapeHtml(entry.message)}</span></div>`).join("");
   renderDiscordRelay();
+  renderDiscordChat();
   renderProtocolTrace();
   $("#shared-assignments").innerHTML = room.proposal.assignments.map((assignment) => `<div class="assignment"><div><h4>${escapeHtml(assignment.role)}</h4><p>${assignment.effort} effort ${assignment.effort === 1 ? "point" : "points"} · ${escapeHtml(assignment.reason)}</p></div><span class="owner">${escapeHtml(assignment.owner)}</span></div>`).join("");
   renderActions(mine);
 }
 
+function renderDiscordChat() {
+  const trace = room.proposal.protocol_trace || [];
+  $("#discord-chat").innerHTML = trace.map((event) => {
+    const coordinator = event.actor === "Coordinator";
+    const initial = coordinator ? "GP" : event.actor.trim().charAt(0).toUpperCase();
+    return `<div class="discord-chat-message">
+      <span class="discord-avatar ${coordinator ? "coordinator-avatar" : ""}">${escapeHtml(initial)}</span>
+      <div><div class="discord-message-head"><strong>${escapeHtml(coordinator ? "Prenup Coordinator" : event.actor)}</strong><span>${event.round ? `Round ${event.round}` : "Setup"}</span></div><b>${escapeHtml(event.action)}</b><p>${escapeHtml(event.outcome)}</p></div>
+    </div>`;
+  }).join("");
+}
+
 function renderDiscordRelay() {
   const status = $("#discord-relay-status");
   const link = $("#discord-room-link");
-  status.textContent = room.discord?.connected ? "Discord relay live" : "web trace live";
+  status.textContent = room.discord?.connected ? "Discord relay live" : "Discord preview";
   if (room.discord?.channel_url) {
     link.href = room.discord.channel_url;
     link.classList.remove("hidden");
