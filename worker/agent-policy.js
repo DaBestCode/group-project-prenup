@@ -35,6 +35,16 @@ function buildRoleBid(profile) {
   });
 }
 
+function buildPublicBidSummary(profile) {
+  const bids = buildRoleBid(profile);
+  const ranked = [...bids].sort((left, right) => right.score - left.score || left.role.localeCompare(right.role));
+  return {
+    top_role: ranked[0].role,
+    top_score: ranked[0].score,
+    constrained_roles: bids.filter((bid) => !bid.willing).length,
+  };
+}
+
 function evaluateProposal(profile, proposal) {
   const assignments = proposal.assignments.filter((assignment) => assignment.owner_id === profile.id);
   const assignedRoleIds = assignments.map((assignment) => assignment.role_id);
@@ -75,4 +85,4 @@ function evaluateProposal(profile, proposal) {
   };
 }
 
-export { buildRoleBid, createAgentPolicy, evaluateProposal };
+export { buildPublicBidSummary, buildRoleBid, createAgentPolicy, evaluateProposal };

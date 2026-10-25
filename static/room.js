@@ -103,8 +103,21 @@ function renderRoom() {
     : room.proposal.requires_owner_tradeoff ? "Owner tradeoff needed" : "Agents recommend approval";
   $("#shared-status").classList.toggle("signed", room.status === "signed");
   $("#shared-log").innerHTML = room.proposal.log.map((entry) => `<div class="message"><strong>${escapeHtml(entry.speaker)}</strong><span>${escapeHtml(entry.message)}</span></div>`).join("");
+  renderProtocolTrace();
   $("#shared-assignments").innerHTML = room.proposal.assignments.map((assignment) => `<div class="assignment"><div><h4>${escapeHtml(assignment.role)}</h4><p>${assignment.effort} effort ${assignment.effort === 1 ? "point" : "points"} · ${escapeHtml(assignment.reason)}</p></div><span class="owner">${escapeHtml(assignment.owner)}</span></div>`).join("");
   renderActions(mine);
+}
+
+function renderProtocolTrace() {
+  const trace = room.proposal.protocol_trace || [];
+  $("#protocol-trace").innerHTML = trace.map((event, index) => `
+    <div class="trace-event">
+      <span class="trace-index">${String(index + 1).padStart(2, "0")}</span>
+      <div><b>${escapeHtml(event.action)}</b><strong>${escapeHtml(event.actor)}</strong></div>
+      <p>${escapeHtml(event.outcome)}</p>
+      <span class="trace-round">${event.round ? `ROUND ${event.round}` : "SETUP"}</span>
+    </div>
+  `).join("");
 }
 
 function agentStateLabel(participant) {

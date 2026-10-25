@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildRoleBid, createAgentPolicy, evaluateProposal } from "../worker/agent-policy.js";
+import { buildPublicBidSummary, buildRoleBid, createAgentPolicy, evaluateProposal } from "../worker/agent-policy.js";
 
 const maya = {
   id: "maya",
@@ -18,6 +18,10 @@ assert.equal(JSON.stringify(policy).includes("Never share me"), false);
 const bids = buildRoleBid(maya);
 assert.ok(bids.find((bid) => bid.role_id === "research").score > 0);
 assert.equal(bids.find((bid) => bid.role_id === "presentation").willing, false);
+const publicBid = buildPublicBidSummary(maya);
+assert.equal(publicBid.top_role, "Research lead");
+assert.equal(publicBid.constrained_roles, 1);
+assert.equal(JSON.stringify(publicBid).includes("Never share me"), false);
 
 const acceptable = evaluateProposal(maya, {
   assignments: [{ owner_id: "maya", role_id: "research", effort: 2 }],

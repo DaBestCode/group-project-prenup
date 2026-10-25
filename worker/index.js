@@ -1,5 +1,5 @@
 import { negotiate } from "../static/negotiator.js";
-import { buildRoleBid, createAgentPolicy, evaluateProposal } from "./agent-policy.js";
+import { buildPublicBidSummary, buildRoleBid, createAgentPolicy, evaluateProposal } from "./agent-policy.js";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CORS = {
@@ -132,6 +132,7 @@ async function runAgentNegotiation(roomId, env, startingRound) {
   let evaluations;
   let unresolvedTradeoff = false;
   const agentTrace = [];
+  const protocolTrace = [];
 
   for (let attempt = 0; attempt < 4; attempt += 1) {
     participants = await participantsFor(roomId, env);
@@ -139,6 +140,24 @@ async function runAgentNegotiation(roomId, env, startingRound) {
     result = negotiate(profiles);
     delete result.students;
     evaluations = profiles.map((profile) => ({ profile, evaluation: evaluateProposal(profile, result) }));
+
+    if (attempt === 0) {
+      profiles.forEach((profile) => {
+        const bid = buildPublicBidSummary(profile);
+        protocolTrace.push({
+          round: 0,
+          actor: `${profile.name}'s agent`,
+          action: "BID SUBMITTED",
+          outcome: `Top bid: ${bid.top_role} (${bid.top_score}). ${bid.constrained_roles} constrained role${bid.constrained_roles === 1 ? "" : "s"}.`,
+        });
+      });
+    }
+    protocolTrace.push({
+      round,
+      actor: "Coordinator",
+      action: "DRAFT CREATED",
+      outcome: `${result.assignments.length} roles assigned with fairness score ${result.fairness_score}.`,
+    });
 
     await env.DB.batch(evaluations.flatMap(({ profile, evaluation }) => [
       env.DB.prepare(
@@ -153,6 +172,12 @@ async function runAgentNegotiation(roomId, env, startingRound) {
 
     evaluations.forEach(({ profile, evaluation }) => {
       agentTrace.push({ speaker: `${profile.name}'s agent`, message: `Round ${round}: ${evaluation.public_reason}` });
+      protocolTrace.push({
+        round,
+        actor: `${profile.name}'s agent`,
+        action: evaluation.recommendation === "counter" ? "DRAFT REJECTED" : evaluation.recommendation === "owner_tradeoff" ? "TRADEOFF FLAGGED" : "DRAFT ACCEPTABLE",
+        outcome: evaluation.public_reason,
+      });
     });
 
     const counters = evaluations.filter(({ evaluation }) => evaluation.recommendation === "counter");
@@ -190,6 +215,14 @@ async function runAgentNegotiation(roomId, env, startingRound) {
           private_reason_shared: false,
         }),
       );
+      protocolTrace.push({
+        round,
+        actor: `${profile.name}'s agent`,
+        action: "COUNTER SENT",
+        outcome: evaluation.unavailable_roles.length
+          ? `Removed ${evaluation.unavailable_roles.join(", ")} from future assignments.`
+          : `Enforced a maximum workload of ${evaluation.capacity} effort points.`,
+      });
     });
     await env.DB.batch(counterCommands);
     if (!policyChanged || attempt === 3) {
@@ -206,6 +239,15 @@ async function runAgentNegotiation(roomId, env, startingRound) {
     public_reason: evaluation.public_reason,
   }));
   result.requires_owner_tradeoff = unresolvedTradeoff;
+  protocolTrace.push({
+    round,
+    actor: "Coordinator",
+    action: "OWNER HANDOFF",
+    outcome: unresolvedTradeoff
+      ? "Autonomous bargaining exhausted its safe options; owners must judge the remaining tradeoff."
+      : "Every agent recommends the draft; owners retain final consent.",
+  });
+  result.protocol_trace = protocolTrace;
   result.log.push(...agentTrace);
   result.log.push({
     speaker: "Coordinator",

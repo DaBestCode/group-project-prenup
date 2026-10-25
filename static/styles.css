@@ -113,6 +113,18 @@ blockquote { margin: 20px 0; font-size: 28px; line-height: 1.25; font-weight: 80
 .live-dot::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: pulse 1.8s infinite; }
 @keyframes pulse { 50% { opacity: .35; } }
 .conversation { padding: 18px 24px 4px; display: grid; gap: 12px; max-height: 450px; overflow: auto; }
+.control-room-panel { margin-bottom: 20px; background: #151713; color: white; box-shadow: 10px 10px 0 var(--blue); }
+.control-room-panel .panel-title { border-color: rgba(255,255,255,.16); }
+.control-room-panel .panel-kicker { color: var(--acid); }
+.trace-explainer { margin: 0; padding: 15px 24px; color: #b8bcb4; border-bottom: 1px solid rgba(255,255,255,.16); font-size: 12px; }
+.protocol-trace { max-height: 390px; overflow: auto; }
+.trace-event { display: grid; grid-template-columns: 38px 190px minmax(220px, 1fr) 74px; gap: 14px; align-items: center; padding: 13px 24px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.trace-index, .trace-round { color: #858b81; font: 500 9px "DM Mono", monospace; }
+.trace-event div { display: grid; gap: 3px; }
+.trace-event b { color: var(--acid); font: 500 10px "DM Mono", monospace; }
+.trace-event strong { font-size: 12px; }
+.trace-event p { margin: 0; color: #d5d8d1; font-size: 12px; line-height: 1.45; }
+.trace-round { text-align: right; }
 .message { display: grid; grid-template-columns: 105px 1fr; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 13px; line-height: 1.5; }
 .message strong { font: 500 10px "DM Mono", monospace; color: var(--blue); }
 .privacy-note { display: flex; gap: 12px; margin: 18px 24px 24px; padding: 15px; background: #f1ede4; font-size: 12px; line-height: 1.45; }
@@ -173,6 +185,8 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
 .room-card h2 { margin: 8px 0 26px; font-size: 34px; letter-spacing: -.04em; }
 .room-card h3 { margin: 8px 0 20px; font-size: 24px; }
 .room-card form, .profile-form { display: grid; gap: 18px; }
+.judge-demo-note { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid rgba(29,32,28,.25); font-size: 12px; }
+.judge-demo-note a { color: var(--ink); font-weight: 800; }
 .room-card label { display: grid; gap: 8px; font: 500 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .05em; }
 .room-card label small { color: #73776f; font: 400 10px Manrope, sans-serif; text-transform: none; letter-spacing: 0; }
 .room-card input, .room-card select, .room-card textarea { width: 100%; padding: 14px; border: 1px solid var(--ink); border-radius: 0; background: rgba(255,255,255,.8); color: var(--ink); font: 500 14px Manrope, sans-serif; }
@@ -221,6 +235,8 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .room-start, .lobby-grid { grid-template-columns: 1fr; }
   .cubbie-launch-card { grid-template-columns: 1fr; }
   .personal-agent-card { grid-template-columns: 1fr; }
+  .trace-event { grid-template-columns: 32px 150px 1fr; }
+  .trace-round { display: none; }
   .section-heading, .demo-grid, .consent-panel { display: grid; grid-template-columns: 1fr; }
   .section-heading { align-items: start; }
   .steps article { min-height: 210px; }
@@ -244,4 +260,6 @@ footer { display: flex; justify-content: space-between; gap: 30px; padding: 28px
   .profile-form { grid-template-columns: 1fr; }
   .profile-form label, .profile-form label:nth-child(5), .profile-form .share-preview, .profile-form button { grid-column: 1; }
   .room-card-heading, .shared-room-header, .share-preview, .shared-actions { align-items: stretch; flex-direction: column; }
+  .trace-event { grid-template-columns: 30px 1fr; }
+  .trace-event p { grid-column: 2; }
 }
