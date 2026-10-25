@@ -25,10 +25,18 @@ signed = confirmSession(signed, "leo", true);
 assert.equal(signed.status, "signed");
 console.log("static negotiator: all assertions passed");
 
-const launchMessage = buildCubbiePrompt({ roomCode: "ABC234", title: "CSE 412 Final", roomUrl: "https://example.test/room?room=ABC234" });
+const launchMessage = buildCubbiePrompt({
+  roomCode: "ABC234",
+  title: "CSE 412 Final",
+  roomUrl: "https://example.test/room?room=ABC234",
+  profile: { name: "Maya", strengths: ["research"], prefers: ["analysis"], avoids: ["presentation"], available: ["Thu 5:30"], capacity: 3 },
+});
 assert.match(launchMessage, /Room code: ABC234/);
 assert.match(launchMessage, /CSE 412 Final/);
 assert.ok(launchMessage.includes(SKILL_URL));
+assert.match(launchMessage, /Name: Maya/);
+assert.match(launchMessage, /Roles to avoid: presentation/);
+assert.match(launchMessage, /Workload capacity: 3 effort points/);
 assert.equal(buildSmsUrl(launchMessage).startsWith("sms:?body="), true);
 assert.equal(decodeURIComponent(buildSmsUrl(launchMessage).split("?body=")[1]), launchMessage);
 console.log("Cubbie launch: all assertions passed");

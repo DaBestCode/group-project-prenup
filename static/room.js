@@ -7,6 +7,7 @@ const apiBase = (params.get("api") || window.location.origin).replace(/\/$/, "")
 let room = null;
 let agentInbox = null;
 let pollTimer = null;
+let handoffProfile = null;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[character]));
@@ -50,9 +51,9 @@ function roomInviteUrl(code = roomCode) {
   return invite.toString();
 }
 
-function renderCubbieLaunch() {
-  if (roomCode.length !== 6) return;
-  const prompt = buildCubbiePrompt({ roomCode, title: room?.title, roomUrl: roomInviteUrl() });
+function renderCubbieLaunch(profile) {
+  if (roomCode.length !== 6 || !profile) return;
+  const prompt = buildCubbiePrompt({ roomCode, title: room?.title, roomUrl: roomInviteUrl(), profile });
   $("#cubbie-launch-card").classList.remove("hidden");
   $("#cubbie-message").value = prompt;
   $("#open-in-cubbie").href = buildSmsUrl(prompt);
@@ -62,9 +63,9 @@ async function loadRoom() {
   room = await request(`/api/rooms/${roomCode}`);
   const mine = membership();
   agentInbox = mine ? await request(`/api/rooms/${roomCode}/inbox`, { headers: { Authorization: `Bearer ${mine.token}` } }) : null;
-  renderCubbieLaunch();
+  if (handoffProfile) renderCubbieLaunch(handoffProfile);
   $("#start-screen").classList.add("hidden");
-  if (!mine && room.status === "lobby" && room.spots_left > 0) {
+  if (!mine && !handoffProfile && room.status === "lobby" && room.spots_left > 0) {
     $("#join-screen").classList.remove("hidden");
     $("#room-screen").classList.add("hidden");
     $("#join-title").textContent = room.title;
@@ -245,22 +246,33 @@ $("#code-form").addEventListener("submit", (event) => {
 $("#join-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
-  try {
-    const result = await request(`/api/rooms/${roomCode}/join`, {
-      method: "POST",
-      body: JSON.stringify({
-        name: form.get("name"), strengths: values(form.get("strengths")), prefers: values(form.get("prefers")),
-        avoids: values(form.get("avoids")), available: values(form.get("available")), capacity: Number(form.get("capacity")),
-      }),
-    });
-    localStorage.setItem(`prenup:${roomCode}`, JSON.stringify({ participant_id: result.participant_id, token: result.participant_token }));
-    room = result.room;
-    agentInbox = await request(`/api/rooms/${roomCode}/inbox`, { headers: { Authorization: `Bearer ${result.participant_token}` } });
-    $("#join-screen").classList.add("hidden");
-    $("#room-screen").classList.remove("hidden");
-    renderRoom();
-    pollTimer = setTimeout(loadRoom, 2500);
-  } catch (error) { showAlert(error.message); }
+  handoffProfile = {
+    name: String(form.get("name") || "").trim(),
+    strengths: values(form.get("strengths")),
+    prefers: values(form.get("prefers")),
+    avoids: values(form.get("avoids")),
+    available: values(form.get("available")),
+    capacity: Number(form.get("capacity")),
+  };
+  renderCubbieLaunch(handoffProfile);
+  $("#join-screen").classList.add("hidden");
+  $("#room-screen").classList.remove("hidden");
+  renderRoom();
+  $("#cubbie-launch-card").scrollIntoView({ behavior: "smooth", block: "start" });
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(loadRoom, 2500);
+});
+
+$("#return-to-profile").addEventListener("click", () => {
+  if (room?.status !== "lobby" || room?.spots_left < 1) {
+    showAlert("This room has already started negotiating, so its agent roster is locked.");
+    return;
+  }
+  handoffProfile = null;
+  $("#cubbie-launch-card").classList.add("hidden");
+  $("#room-screen").classList.add("hidden");
+  $("#join-screen").classList.remove("hidden");
+  $("#join-screen").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 $("input[name=capacity]").addEventListener("input", (event) => { $("#capacity-output").textContent = event.target.value; });
@@ -287,6 +299,5 @@ $("#share-cubbie-invite").addEventListener("click", async () => {
 });
 
 if (roomCode.length === 6) {
-  renderCubbieLaunch();
   loadRoom().catch((error) => showAlert(error.message));
 }

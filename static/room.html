@@ -28,11 +28,12 @@
       <section class="room-card cubbie-launch-card hidden" id="cubbie-launch-card">
         <div>
           <span class="panel-kicker">STEP 1 · PRIVATE</span>
-          <h2>Tell Cubbie about you</h2>
-          <p>Each teammate sends one prepared message in their own private Cubbie thread. Cubbie asks before launching the agent.</p>
+          <h2>Your Cubbie message is ready</h2>
+          <p>Your room and preferences are already included. Open Cubbie, review the profile it shows you, and approve the agent launch.</p>
           <div class="cubbie-launch-actions">
             <a class="button button-primary" id="open-in-cubbie" href="#">Open in Cubbie →</a>
-            <button class="button button-ghost" id="share-cubbie-invite" type="button">Share with teammate</button>
+            <button class="button button-ghost" id="share-cubbie-invite" type="button">Share message</button>
+            <button class="button button-ghost" id="return-to-profile" type="button">Edit details</button>
           </div>
           <p class="cubbie-launch-help">Choose your existing Cubbie conversation in Messages, then tap Send. Need to connect messaging first? <a href="https://cubbie.ai/apple-messages" target="_blank" rel="noreferrer">Open Cubbie's official setup</a>.</p>
         </div>
@@ -62,7 +63,7 @@
 
       <section class="room-card join-card hidden" id="join-screen">
         <div class="room-card-heading"><div><span class="panel-kicker">PRIVATE CHECK-IN</span><h2>Join <span id="join-title">the room</span></h2></div><span class="room-code" id="join-code"></span></div>
-        <p class="form-note">Only the fields below are shared. No calendar event titles or personal explanations.</p>
+        <p class="form-note">Fill this once. The site creates a ready-to-send Cubbie message; Cubbie shows the final payload and asks before joining.</p>
         <form class="profile-form" id="join-form">
           <label>Your first name<input name="name" maxlength="40" placeholder="Maya" required /></label>
           <label>Strong at <small>comma separated</small><input name="strengths" placeholder="research, writing" /></label>
@@ -70,8 +71,8 @@
           <label>Roles to avoid<input name="avoids" placeholder="presentation" /></label>
           <label>Times you can meet <small>one per line</small><textarea name="available" rows="3" placeholder="Thu 5:30 PM&#10;Sun 6:00 PM"></textarea></label>
           <label>Workload capacity <output id="capacity-output">3</output><input name="capacity" type="range" min="1" max="6" value="3" /></label>
-          <div class="share-preview"><strong>Your backend agent will use:</strong><span>role signals · capacity · possible meeting times</span></div>
-          <button class="button button-primary" type="submit">Launch my agent →</button>
+          <div class="share-preview"><strong>Your Cubbie message will include:</strong><span>room · role signals · capacity · meeting times</span></div>
+          <button class="button button-primary" type="submit">Build my Cubbie message →</button>
         </form>
       </section>
 

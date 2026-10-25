@@ -4,7 +4,7 @@
 
 **The demo in one line:** students tell Cubbie privately, their agents bargain visibly in Discord, and Cubbie returns for final approval.
 
-Group Project Prenup is a working Cubbie Hackathon Track 2 app. Joining a room launches a separately authenticated personal agent in the backend for each student. Those agents score role bids, evaluate drafts, counter constraint violations, and escalate only a ready proposal or an unresolved tradeoff to their owners. Cubbie is an optional private owner channel; the web inbox keeps the entire flow usable when Cubbie is unavailable.
+Group Project Prenup is a working Cubbie Hackathon Track 2 app. Each student fills one short web form, which generates a complete Cubbie message containing the Skill, room, and redacted profile. Cubbie shows the payload, asks permission, and launches that student's authenticated agent. Those agents score bids, evaluate drafts, counter constraint violations in Discord, and return to their owners through Cubbie only when a decision is required.
 
 ## Try it
 
@@ -12,17 +12,17 @@ Group Project Prenup is a working Cubbie Hackathon Track 2 app. Joining a room l
 - [Live shared rooms](https://group-project-prenup.pjanga.workers.dev/room) — persistent invite rooms for separate student agents
 - [Prepared four-round agent trace](https://group-project-prenup.pjanga.workers.dev/room?room=TMWAA7) — an immediate judge view with competing bids, four counteroffers, and owner escalation
 
-After a room is created, **Open in Cubbie** launches the phone's messaging app with one complete message containing the Skill link, project, room URL, room code, and watcher instruction. **Share with teammate** opens the native share sheet with the same ready-to-send handoff. Cubbie does not publish a universal messaging number, so the student selects their existing Cubbie conversation and taps Send; no links or codes need to be copied separately.
+After a room is created, each teammate enters their name, strengths, preferred roles, roles to avoid, availability, and capacity once. The site turns those fields into one complete Cubbie message with the Skill link, project, room, watcher instruction, and shareable profile. **Open in Cubbie** launches the phone's messaging app with that message ready. The website does not join or create the agent itself.
 
 The demo starts with a real conflict: all three agents want research and nobody wants slides. Reject an assignment to see the agents bargain again under the new private constraint.
 
 ## The student flow
 
 1. One student creates a named room for 2–6 agents and shares the invite.
-2. Every teammate approves a redacted profile; the backend creates an authenticated agent with its own policy and inbox.
+2. Every teammate fills the web form once, sends the generated prompt to Cubbie, and approves the exact redacted profile Cubbie shows.
 3. Each agent submits scored role bids. The coordinator drafts a split, and every agent independently evaluates it.
 4. Constraint violations trigger automatic counteroffers and another round. An acceptable draft or unavoidable tradeoff is escalated to each owner.
-5. Owners respond in the web room or through Cubbie's watcher. A private rejection reveals only the newly unavailable role.
+5. Owners respond through Cubbie's watcher. A private rejection reveals only the newly unavailable role.
 6. Unanimous approval signs the treaty and sends a final notice to every personal agent.
 
 The live room includes an **Agent Control Room** generated from the Worker protocol. Judges can inspect every sanitized bid, draft, evaluation, counteroffer, round change, and owner handoff. This trace comes from the backend negotiation result rather than a browser animation.
@@ -76,7 +76,7 @@ npm run db:migrate:local
 npm run dev
 ```
 
-Open the local URL printed by Wrangler, choose **Create a shared room**, and open the invite in separate browser profiles for each teammate.
+Open the local URL printed by Wrangler, create a room, fill the profile form, and inspect the generated Cubbie handoff. To join without Cubbie during development, use the coordinator CLI below.
 
 ## Deploy on Cloudflare's free tier
 
